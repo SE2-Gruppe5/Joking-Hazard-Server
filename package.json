@@ -1,0 +1,18 @@
+{
+  "name": "joking-hazard-server",
+  "version": "1.0.0",
+  "description": "A webserver for our Android Implementation of the Game 'Joking Hazard'",
+  "main": "index.js",
+  "dependencies": {
+    "socket.io": "^4.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.2.4"
+  },
+  "scripts": {
+    "watch": "tsc -w",
+    "start": "node build/index.js"
+  },
+  "author": "FD",
+  "license": "ISC"
+}
