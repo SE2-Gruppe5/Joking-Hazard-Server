@@ -1,35 +1,36 @@
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
-import { registerRoomHandlers } from "./handlers/roomHandler";
+import { registerRoomHandlers } from "./handlers/roomHandlers";
 import { registerUserHandlers } from "./handlers/userHandlers";
+import { logger } from "./utils/Logger";
 
 const httpServer = createServer();
 const io = new Server(httpServer);
 
-console.log("starting...");
+logger.debug("starting...");
 
 io.on("connection", (socket: Socket) => {
-  console.log(socket.id);
+  logger.debug(socket.id);
   registerRoomHandlers(io, socket);
   registerUserHandlers(io, socket);
 });
 
 io.of("/").adapter.on("create-room", (room) => {
-  console.log(`room ${room} was created`);
+  logger.debug(`room ${room} was created`);
 });
 
 io.of("/").adapter.on("delete-room", (room) => {
-  console.log(`room ${room} was deleted`);
+  logger.debug(`room ${room} was deleted`);
 });
 
 io.of("/").adapter.on("join-room", (room, id) => {
-  console.log(`socket ${id} has joined room ${room}`);
+  logger.debug(`socket ${id} has joined room ${room}`);
 });
 
 io.of("/").adapter.on("leave-room", (room, id) => {
-  console.log(`socket ${id} has left room ${room}`);
+  logger.debug(`socket ${id} has left room ${room}`);
 });
 
 httpServer.listen(3000, () => {
-  console.log("Listening...");
+  logger.debug("listening...");
 });
