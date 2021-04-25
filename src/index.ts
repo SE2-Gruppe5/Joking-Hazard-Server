@@ -13,6 +13,7 @@ io.on("connection", (socket: Socket) => {
   logger.debug(socket.id);
   registerRoomHandlers(io, socket);
   registerUserHandlers(io, socket);
+  socket.onAny(logSocketEvent);
 });
 
 io.of("/").adapter.on("create-room", (room) => {
@@ -30,6 +31,10 @@ io.of("/").adapter.on("join-room", (room, id) => {
 io.of("/").adapter.on("leave-room", (room, id) => {
   logger.debug(`socket ${id} has left room ${room}`);
 });
+
+function logSocketEvent(...args: any[]) {
+  logger.debug({ eventType: "socketEvent", event: args[0], args });
+}
 
 httpServer.listen(3000, () => {
   logger.debug("listening...");

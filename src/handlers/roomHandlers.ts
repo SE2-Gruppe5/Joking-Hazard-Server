@@ -9,17 +9,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
 
   socket.on("room:leave", () => leaveRoom(io, socket));
 
-  socket.on("room:players", (roomCode) => {
-    io.in(roomCode)
-      .allSockets()
-      .then((sockets) => {
-        let arr = [];
-        sockets.forEach((socket) => {
-          arr.push(io.sockets.sockets.get(socket).data.name);
-        });
-        socket.emit("resposne:get_players_in_room", arr);
-      });
-  });
+  socket.on("room:players", (roomCode) => getPlayers(io, socket, roomCode));
 }
 
 /**
