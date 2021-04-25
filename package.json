@@ -11,7 +11,7 @@
   },
   "scripts": {
     "watch": "tsc -w",
-    "start": "node build/index.js"
+    "start": "tsc && node build/index.js"
   },
   "author": "FD",
   "license": "ISC"
