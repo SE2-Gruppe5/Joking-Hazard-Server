@@ -6,5 +6,5 @@
     "module": "commonjs",
     "declaration": true
   },
-  "include": ["*.ts", "handlers/*.ts"]
+  "include": ["src/handlers/*.ts", "src/index.ts"]
 }
