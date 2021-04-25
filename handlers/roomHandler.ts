@@ -4,12 +4,10 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
   // Join a room
   socket.on("room:join", (roomCode: string) => {
     socket.join(roomCode);
-    console.log(socket.data.name + " joined room " + roomCode);
   });
 
   // Leave a rooom
   socket.on("room:leave", (roomCode: string) => {
-    console.log(socket.data.name + " left room " + roomCode);
     socket.leave(roomCode);
   });
 
