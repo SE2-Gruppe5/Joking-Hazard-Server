@@ -1,3 +1,4 @@
+import { instrument } from "@socket.io/admin-ui";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import { registerRoomHandlers } from "./handlers/roomHandlers";
@@ -6,6 +7,14 @@ import { logger } from "./utils/Logger";
 
 const httpServer = createServer();
 const io = new Server(httpServer);
+
+instrument(io, {
+  auth: {
+    type: "basic",
+    username: "admin",
+    password: "$2y$12$64WTig8qC13.w1l9xK.oUe5HbUd0WkcgpGuX2j6dUwNLLgKIuzKsa",
+  },
+});
 
 logger.debug("starting...");
 

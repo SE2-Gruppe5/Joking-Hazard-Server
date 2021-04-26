@@ -4,6 +4,7 @@
   "description": "A webserver for our Android Implementation of the Game 'Joking Hazard'",
   "main": "index.js",
   "dependencies": {
+    "@socket.io/admin-ui": "0.0.1",
     "pino": "^6.11.3",
     "socket.io": "^4.0.1"
   },
