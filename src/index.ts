@@ -6,7 +6,11 @@ import { registerUserHandlers } from "./handlers/userHandlers";
 import { logger } from "./utils/Logger";
 
 const httpServer = createServer();
-const io = new Server(httpServer);
+const io = new Server(httpServer, {
+  cors: {
+    origin: ["https://admin.socket.io"],
+  },
+});
 
 instrument(io, {
   auth: {
