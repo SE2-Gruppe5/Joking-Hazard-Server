@@ -1,4 +1,5 @@
 import { Server, Socket } from "socket.io";
+import { MessageType, Message } from "../models/enums";
 
 export function registerRoomHandlers(io: Server, socket: Socket) {
   socket.on("room:create", () => createRoom(io, socket));
@@ -22,15 +23,19 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
  */
 function createRoom(io: Server, socket: Socket) {
   if (socket.data.currentRoom) {
-    socket.emit("error:already_in_a_room");
+    socket.emit(MessageType.ERROR, { msg: Message.already_in_room });
   } else {
     let room = findEmptyRoom(io);
     if (!room) {
-      socket.emit("error:no_free_room");
+      socket.emit(MessageType.ERROR, { msg: Message.no_free_room });
     } else {
       socket.join(room);
       socket.data.currentRoom = room;
       socket.data.admin = true;
+      socket.emit(MessageType.INFO, {
+        msg: Message.room_created,
+        roomdId: room,
+      });
     }
   }
 }
@@ -45,15 +50,16 @@ function createRoom(io: Server, socket: Socket) {
  */
 function joinRoom(io: Server, socket: Socket, room: string) {
   if (socket.data.currentRoom) {
-    socket.emit("error:already_in_a_room");
+    socket.emit(MessageType.ERROR, { msg: Message.already_in_room });
   } else if (!io.of("/").adapter.rooms.has(room)) {
-    socket.emit("error:room_doesnt_exist");
+    socket.emit(MessageType.ERROR, { msg: Message.room_doesnt_exist });
   } else if (io.of("/").adapter.rooms.get(room).size >= 4) {
-    socket.emit("error:room_full");
+    socket.emit(MessageType.ERROR, { msg: Message.room_full });
   } else {
     socket.join(room);
     socket.data.currentRoom = room;
     socket.data.admin = false;
+    socket.emit(MessageType.INFO, { msg: Message.room_joined, roomId: room });
   }
 }
 
@@ -67,19 +73,24 @@ function joinRoom(io: Server, socket: Socket, room: string) {
  */
 function leaveRoom(io: Server, socket: Socket) {
   if (!socket.data.currentRoom) {
-    socket.emit("error:not_in_a_room");
+    socket.emit(MessageType.ERROR, { msg: Message.user_not_in_a_room });
   } else {
     socket.leave(socket.data.currentRoom);
-    io.in(socket.data.currentRoom).emit(
-      "notify:user_left_game",
-      socket.data.name
-    );
+    io.in(socket.data.currentRoom).emit(MessageType.INFO, {
+      msg: Message.user_left_game,
+      userId: socket.id,
+      userName: socket.data.name,
+    });
     if (socket.data.admin) {
       io.of("/")
         .adapter.fetchSockets({ rooms: socket.data.currentRoom })
         .then((sockets) => {
           sockets[0].data.admin = true;
-          sockets[0].emit("notify:became_admin");
+          sockets[0].emit(MessageType.INFO, {
+            msg: Message.user_became_admin,
+            userId: sockets[0].id,
+            userName: sockets[0].data.name,
+          });
         });
     }
     socket.data.currentRoom = undefined;
@@ -96,11 +107,13 @@ function leaveRoom(io: Server, socket: Socket) {
  */
 function closeRoom(io: Server, socket: Socket) {
   if (!socket.data.admin) {
-    socket.emit("error:not_admin");
+    socket.emit(MessageType.ERROR, { msg: Message.user_not_an_admin });
   } else if (!socket.data.currentRoom) {
-    socket.emit("error:not_in_a_room");
+    socket.emit(MessageType.WARN, { msg: Message.user_not_in_a_room });
   } else {
-    io.in(socket.data.currentRoom).emit("notify:admin_closed_room");
+    io.in(socket.data.currentRoom).emit(MessageType.INFO, {
+      msg: Message.room_closed,
+    });
     io.in(socket.data.currentRoom)
       .fetchSockets()
       .then((sockets) => {
@@ -114,11 +127,18 @@ function getPlayers(io: Server, socket: Socket, roomId: string) {
   io.in(roomId)
     .fetchSockets()
     .then((sockets) => {
-      let arr: Array<string>;
+      let arr: Array<any>;
       sockets.forEach((socket) => {
-        arr.push(socket.id);
+        arr.push({
+          id: socket.id,
+          name: socket.data.name,
+          points: socket.data.points,
+        });
       });
-      socket.emit("resposne:get_players_in_room", arr);
+      socket.emit(MessageType.INFO, {
+        msg: Message.all_players_get_data,
+        users: arr,
+      });
     });
 }
 
