@@ -49,6 +49,6 @@ function logSocketEvent(...args: any[]) {
   logger.debug({ eventType: "socketEvent", event: args[0], args });
 }
 
-httpServer.listen(3000, () => {
+httpServer.listen(process.env.PORT || 3000, () => {
   logger.debug("listening...");
 });
