@@ -16,6 +16,7 @@ export enum MessageType {
  * @export
  * @enum {number} The message
  */
+
 export enum Message {
   already_in_room = "already_in_room",
   no_free_room = "no_free_room",
@@ -35,4 +36,13 @@ export enum Message {
   user_changed_name = "user_changed_name",
   all_players_get_data = "all_players_get_data",
   user_set_points = "user_set_points",
+  user_doesnt_exist = "user_doesnt_exist",
 }
+
+interface CallbackObject {
+  status: string;
+  msg: string;
+  [args: string]: any;
+}
+
+export type CallbackFn = (obj: CallbackObject) => void;

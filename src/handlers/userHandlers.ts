@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { MessageType, Message } from "../models/enums";
+import { Message, CallbackFn } from "../models/types";
 
 /**
  * Registers user handlers
@@ -9,12 +9,23 @@ import { MessageType, Message } from "../models/enums";
  * @param {Socket} socket The socket that received a signal
  */
 export function registerUserHandlers(io: Server, socket: Socket) {
-  socket.on("user:name:change", (name) => changeName(io, socket, name));
+  socket.on("user:name:change", (name: string, callback: CallbackFn) =>
+    changeName(socket, name, callback)
+  );
 
-  socket.on("user:data:get", (id) => getUserData(io, socket, id));
+  socket.on("user:data:get", (id: string, callback: CallbackFn) =>
+    getUserData(io, id, callback)
+  );
 
-  socket.on("user:points:set", (points) => setPoints(io, socket, points));
-  socket.on("user:points:get", () => getPoints(io, socket));
+  socket.on("user:points:set", (points: number, callback: CallbackFn) =>
+    setPoints(socket, points, callback)
+  );
+  socket.on("user:points:add", (points: number, callback: CallbackFn) =>
+    addPoints(socket, points, callback)
+  );
+  socket.on("user:points:get", (callback: CallbackFn) =>
+    getPoints(socket, callback)
+  );
 }
 
 /**
@@ -24,9 +35,10 @@ export function registerUserHandlers(io: Server, socket: Socket) {
  * @param {Socket} socket The socket
  * @param {string} name The username to be set
  */
-function changeName(io: Server, socket: Socket, name: string) {
+function changeName(socket: Socket, name: string, callback: CallbackFn) {
   socket.data.name = name;
-  socket.emit(MessageType.INFO, {
+  callback({
+    status: "ok",
     msg: Message.user_changed_name,
     name: socket.data.name,
   });
@@ -39,14 +51,22 @@ function changeName(io: Server, socket: Socket, name: string) {
  * @param {Socket} socket The socket
  * @param {string} id The user id to retrieve
  */
-function getUserData(io: Server, socket: Socket, id: string) {
+function getUserData(io: Server, id: string, callback: CallbackFn) {
   io.in(id)
     .fetchSockets()
     .then((sockets) => {
-      sockets[0].emit(MessageType.INFO, {
-        msg: Message.player_get_data,
-        userData: sockets[0].data,
-      });
+      if (sockets.length <= 0) {
+        callback({
+          status: "err",
+          msg: Message.user_doesnt_exist,
+        });
+      } else {
+        callback({
+          status: "ok",
+          msg: Message.player_get_data,
+          userData: sockets[0].data,
+        });
+      }
     });
 }
 
@@ -57,15 +77,42 @@ function getUserData(io: Server, socket: Socket, id: string) {
  * @param {Socket} socket The socket
  * @param {number} points The points to set for the socket
  */
-function setPoints(io: Server, socket: Socket, points: number) {
+function setPoints(socket: Socket, points: number, callback: CallbackFn) {
   if (socket.data.currentRoom) {
     socket.data.points = points;
-    socket.emit(MessageType.DEBUG, {
+    callback({
+      status: "ok",
       msg: Message.user_set_points,
       points: socket.data.points,
     });
   } else {
-    socket.emit(MessageType.ERROR, { msg: Message.user_not_in_a_room });
+    callback({
+      status: "err",
+      msg: Message.user_not_in_a_room,
+    });
+  }
+}
+
+/**
+ * Set the points of the calling socket
+ *
+ * @param {Server} io The server object
+ * @param {Socket} socket The socket
+ * @param {number} points The points to set for the socket
+ */
+function addPoints(socket: Socket, points: number, callback: CallbackFn) {
+  if (socket.data.currentRoom) {
+    socket.data.points += points;
+    callback({
+      status: "ok",
+      msg: Message.user_set_points,
+      points: socket.data.points,
+    });
+  } else {
+    callback({
+      status: "err",
+      msg: Message.user_not_in_a_room,
+    });
   }
 }
 
@@ -75,13 +122,17 @@ function setPoints(io: Server, socket: Socket, points: number) {
  * @param {Server} io The server object
  * @param {Socket} socket The socket
  */
-function getPoints(io: Server, socket: Socket) {
+function getPoints(socket: Socket, callback: CallbackFn) {
   if (socket.data.currentRoom) {
-    socket.emit(MessageType.INFO, {
-      msg: Message.player_get_points,
+    callback({
+      status: "ok",
+      msg: Message.user_set_points,
       points: socket.data.points,
     });
   } else {
-    socket.emit(MessageType.ERROR, { msg: Message.user_not_in_a_room });
+    callback({
+      status: "err",
+      msg: Message.user_not_in_a_room,
+    });
   }
 }
