@@ -2,24 +2,24 @@ import { Server, Socket } from "socket.io";
 import { MessageType, Message, CallbackFn } from "../models/types";
 
 export function registerRoomHandlers(io: Server, socket: Socket) {
-  socket.on("room:create", (callback: CallbackFn) =>
-    createRoom(io, socket, callback)
+  socket.on("room:create", (callback?: CallbackFn) =>
+    createRoom(io, socket, callback ?? (() => {}))
   );
 
-  socket.on("room:close", (callback: CallbackFn) =>
-    closeRoom(io, socket, callback)
+  socket.on("room:close", (callback?: CallbackFn) =>
+    closeRoom(io, socket, callback ?? (() => {}))
   );
 
-  socket.on("room:join", (roomCode: string, callback: CallbackFn) =>
-    joinRoom(io, socket, roomCode, callback)
+  socket.on("room:join", (roomCode: string, callback?: CallbackFn) =>
+    joinRoom(io, socket, roomCode, callback ?? (() => {}))
   );
 
-  socket.on("room:leave", (callback: CallbackFn) =>
-    leaveRoom(io, socket, callback)
+  socket.on("room:leave", (callback?: CallbackFn) =>
+    leaveRoom(io, socket, callback ?? (() => {}))
   );
 
-  socket.on("room:players", (roomCode: string, callback: CallbackFn) =>
-    getPlayers(io, roomCode, callback)
+  socket.on("room:players", (roomCode: string, callback?: CallbackFn) =>
+    getPlayers(io, roomCode, callback ?? (() => {}))
   );
 }
 
@@ -32,7 +32,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
  * @param {Socket} socket The socket
  * @param {CallbackFn} callback The callback sent to the caller
  */
-function createRoom(io: Server, socket: Socket, callback: CallbackFn) {
+function createRoom(io: Server, socket: Socket, callback?: CallbackFn) {
   if (socket.data.currentRoom) {
     callback({
       status: "err",
@@ -72,7 +72,7 @@ function joinRoom(
   io: Server,
   socket: Socket,
   roomCode: string,
-  callback: CallbackFn
+  callback?: CallbackFn
 ) {
   if (socket.data.currentRoom) {
     callback({
@@ -80,13 +80,11 @@ function joinRoom(
       msg: Message.already_in_room,
     });
   } else if (!io.of("/").adapter.rooms.has(roomCode)) {
-    socket.emit(MessageType.ERROR, { msg: Message.room_doesnt_exist });
     callback({
       status: "err",
       msg: Message.room_doesnt_exist,
     });
   } else if (io.of("/").adapter.rooms.get(roomCode).size >= 4) {
-    socket.emit(MessageType.ERROR, { msg: Message.room_full });
     callback({
       status: "err",
       msg: Message.room_full,
@@ -112,7 +110,7 @@ function joinRoom(
  * @param {Socket} socket The socket
  * @param {CallbackFn} callback The callback sent to the caller
  */
-function leaveRoom(io: Server, socket: Socket, callback: CallbackFn) {
+function leaveRoom(io: Server, socket: Socket, callback?: CallbackFn) {
   if (!socket.data.currentRoom) {
     callback({
       status: "err",
@@ -126,15 +124,17 @@ function leaveRoom(io: Server, socket: Socket, callback: CallbackFn) {
       userName: socket.data.name,
     });
     if (socket.data.admin) {
-      io.of("/")
-        .adapter.fetchSockets({ rooms: socket.data.currentRoom })
+      io.in(socket.data.currentRoom)
+        .fetchSockets()
         .then((sockets) => {
-          sockets[0].data.admin = true;
-          sockets[0].emit(MessageType.INFO, {
-            msg: Message.user_became_admin,
-            userId: sockets[0].id,
-            userName: sockets[0].data.name,
-          });
+          if (sockets.length !== 0) {
+            sockets[0].data.admin = true;
+            sockets[0].emit(MessageType.INFO, {
+              msg: Message.user_became_admin,
+              userId: sockets[0].id,
+              userName: sockets[0].data.name,
+            });
+          }
         });
     }
     socket.data.currentRoom = undefined;
@@ -154,15 +154,13 @@ function leaveRoom(io: Server, socket: Socket, callback: CallbackFn) {
  * @param {Socket} socket The socket
  * @param {CallbackFn} callback The callback sent to the caller
  */
-function closeRoom(io: Server, socket: Socket, callback: CallbackFn) {
+function closeRoom(io: Server, socket: Socket, callback?: CallbackFn) {
   if (!socket.data.admin) {
-    socket.emit(MessageType.ERROR, { msg: Message.user_not_an_admin });
     callback({
       status: "err",
       msg: Message.user_not_an_admin,
     });
   } else if (!socket.data.currentRoom) {
-    socket.emit(MessageType.WARN, { msg: Message.user_not_in_a_room });
     callback({
       status: "err",
       msg: Message.user_not_in_a_room,
@@ -179,7 +177,7 @@ function closeRoom(io: Server, socket: Socket, callback: CallbackFn) {
           socket.data.currentRoom = undefined;
           socket.data.admin = undefined;
         });
-        io.close(room);
+        io.socketsLeave(room);
         callback({
           status: "ok",
           msg: Message.room_closed,
@@ -195,7 +193,7 @@ function closeRoom(io: Server, socket: Socket, callback: CallbackFn) {
  * @param {string} roomCode The room code
  * @param {CallbackFn} callback The callback sent to the caller
  */
-function getPlayers(io: Server, roomCode: string, callback: CallbackFn) {
+function getPlayers(io: Server, roomCode: string, callback?: CallbackFn) {
   io.in(roomCode)
     .fetchSockets()
     .then((sockets) => {
@@ -205,7 +203,7 @@ function getPlayers(io: Server, roomCode: string, callback: CallbackFn) {
           msg: Message.room_doesnt_exist,
         });
       } else {
-        let arr: Array<any>;
+        let arr = new Array();
         sockets.forEach((socket) => {
           arr.push({
             id: socket.id,

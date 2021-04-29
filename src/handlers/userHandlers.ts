@@ -1,4 +1,5 @@
-import { Server, Socket } from "socket.io";
+import { RemoteSocket, Server, Socket } from "socket.io";
+import { DefaultEventsMap } from "socket.io/dist/typed-events";
 import { Message, CallbackFn } from "../models/types";
 
 /**
@@ -9,22 +10,34 @@ import { Message, CallbackFn } from "../models/types";
  * @param {Socket} socket The socket that received a signal
  */
 export function registerUserHandlers(io: Server, socket: Socket) {
-  socket.on("user:name:change", (name: string, callback: CallbackFn) =>
-    changeName(socket, name, callback)
+  socket.on("user:name:change", (name: string, callback?: CallbackFn) =>
+    changeName(socket, name, callback ?? (() => {}))
   );
 
-  socket.on("user:data:get", (id: string, callback: CallbackFn) =>
-    getUserData(io, id, callback)
+  socket.on("user:data:get", (id: string, callback?: CallbackFn) =>
+    getSocketById(io, id).then((socket) => {
+      getUserData(socket, callback ?? (() => {}));
+    })
   );
 
-  socket.on("user:points:set", (points: number, callback: CallbackFn) =>
-    setPoints(socket, points, callback)
+  socket.on(
+    "user:points:set",
+    (id: string, points: number, callback?: CallbackFn) =>
+      getSocketById(io, id).then((socket) => {
+        setPoints(socket, points, callback ?? (() => {}));
+      })
   );
-  socket.on("user:points:add", (points: number, callback: CallbackFn) =>
-    addPoints(socket, points, callback)
+  socket.on(
+    "user:points:add",
+    (id: string, points: number, callback?: CallbackFn) =>
+      getSocketById(io, id).then((socket) => {
+        addPoints(socket, points, callback ?? (() => {}));
+      })
   );
-  socket.on("user:points:get", (callback: CallbackFn) =>
-    getPoints(socket, callback)
+  socket.on("user:points:get", (id: string, callback?: CallbackFn) =>
+    getSocketById(io, id).then((socket) => {
+      getPoints(socket, callback ?? (() => {}));
+    })
   );
 }
 
@@ -51,23 +64,22 @@ function changeName(socket: Socket, name: string, callback: CallbackFn) {
  * @param {Socket} socket The socket
  * @param {string} id The user id to retrieve
  */
-function getUserData(io: Server, id: string, callback: CallbackFn) {
-  io.in(id)
-    .fetchSockets()
-    .then((sockets) => {
-      if (sockets.length <= 0) {
-        callback({
-          status: "err",
-          msg: Message.user_doesnt_exist,
-        });
-      } else {
-        callback({
-          status: "ok",
-          msg: Message.player_get_data,
-          userData: sockets[0].data,
-        });
-      }
+function getUserData(
+  socket: RemoteSocket<DefaultEventsMap> | undefined,
+  callback: CallbackFn
+) {
+  if (!socket) {
+    callback({
+      status: "err",
+      msg: Message.user_doesnt_exist,
     });
+  } else {
+    callback({
+      status: "ok",
+      msg: Message.player_get_data,
+      userData: socket.data,
+    });
+  }
 }
 
 /**
@@ -77,8 +89,17 @@ function getUserData(io: Server, id: string, callback: CallbackFn) {
  * @param {Socket} socket The socket
  * @param {number} points The points to set for the socket
  */
-function setPoints(socket: Socket, points: number, callback: CallbackFn) {
-  if (socket.data.currentRoom) {
+function setPoints(
+  socket: RemoteSocket<DefaultEventsMap> | undefined,
+  points: number,
+  callback: CallbackFn
+) {
+  if (!socket) {
+    callback({
+      status: "err",
+      msg: Message.user_doesnt_exist,
+    });
+  } else if (socket.data.currentRoom) {
     socket.data.points = points;
     callback({
       status: "ok",
@@ -94,15 +115,24 @@ function setPoints(socket: Socket, points: number, callback: CallbackFn) {
 }
 
 /**
- * Set the points of the calling socket
+ * Add points to the calling socket
  *
  * @param {Server} io The server object
  * @param {Socket} socket The socket
  * @param {number} points The points to set for the socket
  */
-function addPoints(socket: Socket, points: number, callback: CallbackFn) {
-  if (socket.data.currentRoom) {
-    socket.data.points += points;
+function addPoints(
+  socket: RemoteSocket<DefaultEventsMap> | undefined,
+  points: number,
+  callback: CallbackFn
+) {
+  if (!socket) {
+    callback({
+      status: "err",
+      msg: Message.user_doesnt_exist,
+    });
+  } else if (socket.data.currentRoom) {
+    socket.data.points = points;
     callback({
       status: "ok",
       msg: Message.user_set_points,
@@ -122,8 +152,16 @@ function addPoints(socket: Socket, points: number, callback: CallbackFn) {
  * @param {Server} io The server object
  * @param {Socket} socket The socket
  */
-function getPoints(socket: Socket, callback: CallbackFn) {
-  if (socket.data.currentRoom) {
+function getPoints(
+  socket: RemoteSocket<DefaultEventsMap> | undefined,
+  callback: CallbackFn
+) {
+  if (!socket) {
+    callback({
+      status: "err",
+      msg: Message.user_doesnt_exist,
+    });
+  } else if (socket.data.currentRoom) {
     callback({
       status: "ok",
       msg: Message.user_set_points,
@@ -134,5 +172,18 @@ function getPoints(socket: Socket, callback: CallbackFn) {
       status: "err",
       msg: Message.user_not_in_a_room,
     });
+  }
+}
+
+async function getSocketById(
+  io: Server,
+  id: string
+): Promise<RemoteSocket<DefaultEventsMap[]>> {
+  let sockets = await io.in(id).fetchSockets();
+
+  if (sockets.length == 0) {
+    return undefined;
+  } else {
+    return sockets[0];
   }
 }
