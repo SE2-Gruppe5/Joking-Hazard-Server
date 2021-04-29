@@ -4,15 +4,32 @@
   "description": "A webserver for our Android Implementation of the Game 'Joking Hazard'",
   "main": "index.js",
   "dependencies": {
+    "@socket.io/admin-ui": "0.0.1",
+    "pino": "^6.11.3",
     "socket.io": "^4.0.1"
   },
   "devDependencies": {
-    "typescript": "^4.2.4"
+    "@babel/core": "^7.13.16",
+    "@babel/preset-env": "^7.13.15",
+    "@babel/preset-typescript": "^7.13.0",
+    "@types/jest": "^26.0.22",
+    "@types/pino": "^6.3.7",
+    "babel-jest": "^26.6.3",
+    "jest": "^26.6.3",
+    "ts-jest": "^26.5.5",
+    "typescript": "^4.2.4",
+    "socket.io-client": "4.0.1"
   },
   "scripts": {
     "watch": "tsc -w",
-    "start": "node build/index.js"
+    "start": "node build/index.js",
+    "build": "tsc",
+    "test": "jest"
   },
   "author": "FD",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SE2-Gruppe5/Joking-Hazard-Server"
+  }
 }
