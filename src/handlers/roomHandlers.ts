@@ -1,27 +1,28 @@
 import { Server, Socket } from "socket.io";
-import { MessageType, Message, CallbackFn } from "../models/types";
+import { MessageType, Message, CallbackFn, GameObject } from "../models/types";
+import { getSocketById } from "./userHandlers";
 
-let games = {};
+let games = new Map<string, GameObject>();
 
 export function registerRoomHandlers(io: Server, socket: Socket) {
   socket.on("room:create", (callback?: CallbackFn) =>
-    createRoom(io, socket, callback ?? (() => {}))
+    createRoom(io, socket, callback ?? (() => { }))
   );
 
   socket.on("room:close", (callback?: CallbackFn) =>
-    closeRoom(io, socket, callback ?? (() => {}))
+    closeRoom(io, socket, callback ?? (() => { }))
   );
 
   socket.on("room:join", (roomCode: string, callback?: CallbackFn) =>
-    joinRoom(io, socket, roomCode, callback ?? (() => {}))
+    joinRoom(io, socket, roomCode, callback ?? (() => { }))
   );
 
   socket.on("room:leave", (callback?: CallbackFn) =>
-    leaveRoom(io, socket, callback ?? (() => {}))
+    leaveRoom(io, socket, callback ?? (() => { }))
   );
 
   socket.on("room:players", (roomCode: string, callback?: CallbackFn) =>
-    getPlayers(io, roomCode, callback ?? (() => {}))
+    getPlayers(io, roomCode, callback ?? (() => { }))
   );
 
   socket.on("room:currentPlayer:get", (roomCode: string, callback?: CallbackFn) =>
@@ -31,6 +32,11 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
   socket.on("room:playerDone", (roomCode: string, callback?: CallbackFn) =>
     playerDone(io, socket, roomCode, callback ?? (() => { }))
   );
+
+  socket.on("room:enteredGame", (roomCode: string, callback?: CallbackFn) =>
+    playerEnteredGame(io, socket, roomCode, callback ?? (() => { }))
+  );
+
 }
 
 /**
@@ -56,12 +62,10 @@ function createRoom(io: Server, socket: Socket, callback?: CallbackFn) {
         msg: Message.no_free_room,
       });
     } else {
-      games[room] = null;
-      games[room] = { players: [socket.id], currentPlayer: 0, playersLeft: 0, currentRound: 1 };
+      games.set(room, { players: [socket.id], currentPlayer: 0, currentJudge: 0, playersLeft: 0, currentRound: 1 });
       socket.join(room);
       socket.data.currentRoom = room;
       socket.data.admin = true;
-      socket.data.judge = true;
       callback({
         status: "ok",
         msg: Message.room_created,
@@ -103,8 +107,7 @@ function joinRoom(
       msg: Message.room_full,
     });
   } else {
-    games[roomCode].players.push(socket.id);
-    games[roomCode].playersLeft += 1;
+
     socket.join(roomCode);
     socket.data.currentRoom = roomCode;
     socket.data.admin = false;
@@ -133,11 +136,13 @@ function leaveRoom(io: Server, socket: Socket, callback?: CallbackFn) {
     });
   } else {
     var playerArray = games[socket.data.currentRoom].players;
-    var playerIndex = playerArray.findIndex(socket.id);
+    var playerIndex = playerArray.findIndex((el, index) => {
+      if (el === socket.id) return index;
+    });
     if (playerIndex <= games[socket.data.currentRoom].currentPlayer) {
       games[socket.data.currentRoom].currentPlayer -= 1;
     } else {
-      games[socket.data.currentRoom].playersLeft -= 1; 
+      games[socket.data.currentRoom].playersLeft -= 1;
     }
     playerArray = playerArray.splice(playerIndex, 1);
     games[socket.data.currentRoom].players = playerArray;
@@ -280,7 +285,7 @@ function pad(num: number, size: number): string {
  * @param {string} roomCode The room code
  * @param {CallbackFn} callback The callback sent to the caller
  */
- function getCurrentPlayer(io: Server, roomCode: string, callback?: CallbackFn) {
+function getCurrentPlayer(io: Server, roomCode: string, callback?: CallbackFn) {
   if (!io.of("/").adapter.rooms.has(roomCode)) {
     callback({
       status: "err",
@@ -306,20 +311,24 @@ function pad(num: number, size: number): string {
  */
 function playerDone(io: Server, socket: Socket, roomCode: string, callback?: CallbackFn) {
   if (games[roomCode].playersLeft === 0) {
-    let judge = getJudge(io,roomCode);
-    //emit to judge socket and wait for response
+    let judge = getJudge(io, roomCode).then((socket) => {
 
-    //after response
+      socket.emit("room:all_cards_played");
+
+    })
+
+
     games[roomCode].playersLeft = games[roomCode].players.length - 1;
     games[roomCode].currentPlayer = 0;
     games[roomCode].currentRound += 1;
-    //set judge and edit Index
+    games[roomCode].currentJudge += 1;
+
+
   } else {
     games[roomCode].currentPlayer += 1;
     games[roomCode].playersLeft -= 1;
     let currentPlayerId = games[roomCode].players[games[roomCode].currentPlayer];
-    io.to(currentPlayerId).emit(MessageType.INFO, {
-      msg: Message.user_is_current_player, });
+    io.to(currentPlayerId).emit("room:your_turn");
   }
 }
 
@@ -330,14 +339,19 @@ function playerDone(io: Server, socket: Socket, roomCode: string, callback?: Cal
  * @param {Server} io The server object
  * @param {string} roomCode The room code
  */
-function getJudge(io:Server, roomCode: string) {
-  io.in(roomCode)
-  .fetchSockets()
-  .then((sockets) => {
-      sockets.forEach((socket) => {
-        if (socket.data.judge === true) {
-          return socket
-        }
-      });
-    });
+function getJudge(io: Server, roomCode: string): Promise<any> {
+  return getSocketById(io, games[roomCode].players[games[roomCode].currentJudge]);
+}
+
+function playerEnteredGame(io: Server, socket: Socket, roomCode: string, arg3: CallbackFn): void {
+  games[roomCode].players.push(socket.id);
+  games[roomCode].playersLeft += 1;
+  io.in(roomCode).fetchSockets().then(sockets => {
+    if (games[roomCode].playersLeft === sockets.length) {
+      io.in(roomCode).emit("room:ready_to_play");
+      io.to(games[roomCode].currentPlayerId).emit("room:your_turn", true);
+
+
+    }
+  })
 }

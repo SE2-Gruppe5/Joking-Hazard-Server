@@ -175,10 +175,10 @@ function getPoints(
   }
 }
 
-async function getSocketById(
+export async function getSocketById(
   io: Server,
   id: string
-): Promise<RemoteSocket<DefaultEventsMap[]>> {
+): Promise<any> {
   let sockets = await io.in(id).fetchSockets();
 
   if (sockets.length == 0) {
