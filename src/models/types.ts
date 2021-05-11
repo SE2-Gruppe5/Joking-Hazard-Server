@@ -37,6 +37,13 @@ export enum Message {
   all_players_get_data = "all_players_get_data",
   user_set_points = "user_set_points",
   user_doesnt_exist = "user_doesnt_exist",
+  currentPlayer = 'current_player',
+  user_is_current_player = 'user_is_current_player',
+}
+
+
+export enum Piles {
+  
 }
 
 interface CallbackObject {
