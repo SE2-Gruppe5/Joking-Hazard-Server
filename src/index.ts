@@ -1,6 +1,12 @@
+/**
+ * This module handles creating the server and registering the handlers for every socket connection
+ * @module
+ */
+
 import { instrument } from "@socket.io/admin-ui";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
+import { registerCardHandlers } from "./handlers/cardHandlers";
 import { registerRoomHandlers } from "./handlers/roomHandlers";
 import { registerUserHandlers } from "./handlers/userHandlers";
 import { logger } from "./utils/Logger";
@@ -26,6 +32,7 @@ io.on("connection", (socket: Socket) => {
   logger.debug(socket.id);
   registerRoomHandlers(io, socket);
   registerUserHandlers(io, socket);
+  registerCardHandlers(io, socket);
   socket.onAny(logSocketEvent);
 });
 
@@ -50,5 +57,5 @@ function logSocketEvent(...args: any[]) {
 }
 
 httpServer.listen(process.env.PORT || 3000, () => {
-  logger.debug("listening...");
+  logger.debug(`listening on ${process.env.PORT || 3000}...`);
 });
