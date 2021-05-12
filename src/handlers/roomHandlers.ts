@@ -368,6 +368,9 @@ export function playerEnteredGame(
   io.in(roomCode)
     .fetchSockets()
     .then((sockets) => {
+      if (socket.data.admin) {
+        io.in(roomCode).emit("room:admin_started_game");
+      }
       if (game.playersLeft === sockets.length) {
         io.in(roomCode).emit("room:ready_to_play");
         io.to(game.players[game.currentPlayer]).emit("room:your_turn", {
