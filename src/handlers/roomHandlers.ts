@@ -1,6 +1,16 @@
 import { Server, Socket } from "socket.io";
-import { MessageType, Message, CallbackFn } from "../models/types";
+import { MessageType, Message, CallbackFn, GameObject } from "../models/types";
+import { getSocketById } from "./userHandlers";
 
+let games = new Map<string, GameObject>();
+
+/**
+ * Registers room handlers
+ *
+ * @export
+ * @param {Server} io The server object
+ * @param {Socket} socket The socket
+ */
 export function registerRoomHandlers(io: Server, socket: Socket) {
   socket.on("room:create", (callback?: CallbackFn) =>
     createRoom(io, socket, callback ?? (() => {}))
@@ -18,8 +28,20 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
     leaveRoom(io, socket, callback ?? (() => {}))
   );
 
-  socket.on("room:players", (roomCode: string, callback?: CallbackFn) =>
-    getPlayers(io, roomCode, callback ?? (() => {}))
+  socket.on("room:players", (callback?: CallbackFn) =>
+    getPlayers(io, socket, callback ?? (() => {}))
+  );
+
+  socket.on("room:currentPlayer:get", (callback?: CallbackFn) =>
+    getCurrentPlayer(io, socket, callback ?? (() => {}))
+  );
+
+  socket.on("room:playerDone", (callback?: CallbackFn) =>
+    playerDone(io, socket, callback ?? (() => {}))
+  );
+
+  socket.on("room:enteredGame", (callback?: CallbackFn) =>
+    playerEnteredGame(io, socket, callback ?? (() => {}))
   );
 }
 
@@ -32,7 +54,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
  * @param {Socket} socket The socket
  * @param {CallbackFn} callback The callback sent to the caller
  */
-function createRoom(io: Server, socket: Socket, callback?: CallbackFn) {
+export function createRoom(io: Server, socket: Socket, callback?: CallbackFn) {
   if (socket.data.currentRoom) {
     callback({
       status: "err",
@@ -46,6 +68,13 @@ function createRoom(io: Server, socket: Socket, callback?: CallbackFn) {
         msg: Message.no_free_room,
       });
     } else {
+      games.set(room, {
+        players: [socket.id],
+        currentPlayer: 0,
+        currentJudge: 0,
+        playersLeft: 0,
+        currentRound: 1,
+      });
       socket.join(room);
       socket.data.currentRoom = room;
       socket.data.admin = true;
@@ -68,7 +97,7 @@ function createRoom(io: Server, socket: Socket, callback?: CallbackFn) {
  * @param {string} roomCode The room code
  * @param {CallbackFn} callback The callback sent to the caller
  */
-function joinRoom(
+export function joinRoom(
   io: Server,
   socket: Socket,
   roomCode: string,
@@ -93,6 +122,7 @@ function joinRoom(
     socket.join(roomCode);
     socket.data.currentRoom = roomCode;
     socket.data.admin = false;
+    io.in(roomCode).emit("room:player_joined");
     callback({
       status: "ok",
       msg: Message.room_joined,
@@ -110,13 +140,27 @@ function joinRoom(
  * @param {Socket} socket The socket
  * @param {CallbackFn} callback The callback sent to the caller
  */
-function leaveRoom(io: Server, socket: Socket, callback?: CallbackFn) {
+export function leaveRoom(io: Server, socket: Socket, callback?: CallbackFn) {
   if (!socket.data.currentRoom) {
     callback({
       status: "err",
       msg: Message.user_not_in_a_room,
     });
   } else {
+    let roomCode = socket.data.currentRoom;
+    let game = games.get(roomCode);
+    let playerArray = game.players;
+    let playerIndex = playerArray.findIndex((el, index) => {
+      if (el === socket.id) return index;
+    });
+    if (playerIndex <= game.currentPlayer) {
+      game.currentPlayer -= 1;
+    } else {
+      game.playersLeft -= 1;
+    }
+    playerArray = playerArray.splice(playerIndex, 1);
+    game.players = playerArray;
+
     socket.leave(socket.data.currentRoom);
     io.in(socket.data.currentRoom).emit(MessageType.INFO, {
       msg: Message.user_left_game,
@@ -154,7 +198,7 @@ function leaveRoom(io: Server, socket: Socket, callback?: CallbackFn) {
  * @param {Socket} socket The socket
  * @param {CallbackFn} callback The callback sent to the caller
  */
-function closeRoom(io: Server, socket: Socket, callback?: CallbackFn) {
+export function closeRoom(io: Server, socket: Socket, callback?: CallbackFn) {
   if (!socket.data.admin) {
     callback({
       status: "err",
@@ -167,6 +211,7 @@ function closeRoom(io: Server, socket: Socket, callback?: CallbackFn) {
     });
   } else {
     const room = socket.data.currentRoom;
+    games[room] = null;
     io.in(room).emit(MessageType.INFO, {
       msg: Message.room_closed,
     });
@@ -187,22 +232,23 @@ function closeRoom(io: Server, socket: Socket, callback?: CallbackFn) {
 }
 
 /**
- *
+ * Returns an array of the players in the room
  *
  * @param {Server} io The server object
- * @param {string} roomCode The room code
- * @param {CallbackFn} callback The callback sent to the caller
+ * @param {Socket} socket The socket
+ * @param {CallbackFn} [callback] The callback sent to the caller
  */
-function getPlayers(io: Server, roomCode: string, callback?: CallbackFn) {
-  io.in(roomCode)
-    .fetchSockets()
-    .then((sockets) => {
-      if (sockets.length <= 0) {
-        callback({
-          status: "err",
-          msg: Message.room_doesnt_exist,
-        });
-      } else {
+export function getPlayers(io: Server, socket: Socket, callback?: CallbackFn) {
+  let roomCode = socket.data.currentRoom;
+  if (!roomCode) {
+    callback({
+      status: "err",
+      msg: Message.user_not_in_a_room,
+    });
+  } else {
+    io.in(roomCode)
+      .fetchSockets()
+      .then((sockets) => {
         let arr = new Array();
         sockets.forEach((socket) => {
           arr.push({
@@ -216,8 +262,8 @@ function getPlayers(io: Server, roomCode: string, callback?: CallbackFn) {
           msg: Message.all_players_get_data,
           users: arr,
         });
-      }
-    });
+      });
+  }
 }
 
 /**
@@ -226,7 +272,7 @@ function getPlayers(io: Server, roomCode: string, callback?: CallbackFn) {
  * @param {Server} io The Server Object
  * @return {*}  {(string | undefined)} The room id if one is available, undefined if not
  */
-function findEmptyRoom(io: Server): string | undefined {
+export function findEmptyRoom(io: Server): string | undefined {
   for (let i = 0; i < 1000; i++) {
     let roomCode = pad(i, 4);
     if (io.of("/").adapter.rooms.has(roomCode)) continue;
@@ -236,13 +282,109 @@ function findEmptyRoom(io: Server): string | undefined {
 }
 
 /**
+ * Returns the current Player
+ *
+ * @param {Server} io The server object
+ * @param {string} socket The socket
+ * @param {CallbackFn} [callback] The callback sent to the caller
+ */
+export function getCurrentPlayer(
+  io: Server,
+  socket: Socket,
+  callback?: CallbackFn
+) {
+  let roomCode = socket.data.currentRoom;
+  if (!io.of("/").adapter.rooms.has(roomCode)) {
+    callback({
+      status: "err",
+      msg: Message.room_doesnt_exist,
+    });
+  } else {
+    var currentPlayer =
+      games.get(roomCode).players[games.get(roomCode).currentPlayer];
+    callback({
+      status: "ok",
+      msg: Message.currentPlayer,
+      currentPlayer: currentPlayer,
+    });
+  }
+}
+
+/**
+ * Called when the player says that they're done
+ *
+ * @param {Server} io The server object
+ * @param {Socket} socket The socket
+ * @param {CallbackFn} [callback] The callback sent to the caller
+ */
+export function playerDone(io: Server, socket: Socket, callback?: CallbackFn) {
+  let roomCode = socket.data.currentRoom;
+  let game = games.get(roomCode);
+  if (game.playersLeft === 0) {
+    getJudge(io, roomCode).then((socket) => {
+      socket.emit("room:all_cards_played");
+    });
+
+    game.playersLeft = game.players.length - 1;
+    game.currentPlayer = 0;
+    game.currentRound += 1;
+    game.currentJudge += 1;
+  } else {
+    game.currentPlayer += 1;
+    game.playersLeft -= 1;
+    let currentPlayerId = game.players[game.currentPlayer];
+    io.to(currentPlayerId).emit("room:your_turn");
+  }
+}
+
+/**
+ * Returns a promise containing the current judge
+ *
+ * @param {Server} io The server object
+ * @param {Socket} socket The socket
+ */
+function getJudge(io: Server, socket: Socket): Promise<any> {
+  let roomCode = socket.data.currentRoom;
+  let game = games.get(roomCode);
+  return getSocketById(io, game.players[game.currentJudge]);
+}
+
+/**
+ * Called when a client enters the game
+ *
+ * @param {Server} io The server object
+ * @param {Socket} socket The socket
+ * @param {CallbackFn} [callback] The callback sent to the caller
+ */
+export function playerEnteredGame(
+  io: Server,
+  socket: Socket,
+  callback: CallbackFn
+): void {
+  let roomCode = socket.data.currentRoom;
+  let game = games.get(roomCode);
+  game.players.push(socket.id);
+  game.playersLeft += 1;
+  io.in(roomCode)
+    .fetchSockets()
+    .then((sockets) => {
+      if (game.playersLeft === sockets.length) {
+        io.in(roomCode).emit("room:ready_to_play");
+        io.to(game.players[game.currentPlayer]).emit("room:your_turn", {
+          judge: true,
+        });
+      }
+    });
+}
+
+/**
  * Pads the number with zeroes
  *
  * @param {number} num The number
  * @param {number} size The length of the desired string
  * @return {*}  {string} The padded string
  */
-function pad(num: number, size: number): string {
+export function pad(num: number, size: number): string {
   var s = "0000" + num;
   return s.substr(s.length - size);
 }

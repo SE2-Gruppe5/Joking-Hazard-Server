@@ -37,12 +37,39 @@ export enum Message {
   all_players_get_data = "all_players_get_data",
   user_set_points = "user_set_points",
   user_doesnt_exist = "user_doesnt_exist",
+  currentPlayer = "current_player",
+  user_is_current_player = "user_is_current_player",
+  card_moved = "card_moved",
+  card_doesnt_exist = "card_doesnt_exist",
+  pile_doesnt_exist = "pile_doesnt_exist",
+  pile_is_full = "pile_is_full",
 }
 
-interface CallbackObject {
+export enum Piles {
+  deck,
+  player1,
+  player2,
+  player3,
+  player4,
+  panel1,
+  panel2,
+  panel3,
+  submission,
+  discard,
+}
+
+export interface CallbackObject {
   status: string;
   msg: string;
   [args: string]: any;
 }
 
 export type CallbackFn = (obj: CallbackObject) => void;
+
+export interface GameObject {
+  players: string[];
+  currentPlayer: number;
+  currentJudge: number;
+  playersLeft: number;
+  currentRound: number;
+}

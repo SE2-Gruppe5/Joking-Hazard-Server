@@ -48,7 +48,7 @@ export function registerUserHandlers(io: Server, socket: Socket) {
  * @param {Socket} socket The socket
  * @param {string} name The username to be set
  */
-function changeName(socket: Socket, name: string, callback: CallbackFn) {
+export function changeName(socket: Socket, name: string, callback: CallbackFn) {
   socket.data.name = name;
   callback({
     status: "ok",
@@ -64,10 +64,7 @@ function changeName(socket: Socket, name: string, callback: CallbackFn) {
  * @param {Socket} socket The socket
  * @param {string} id The user id to retrieve
  */
-function getUserData(
-  socket: RemoteSocket<DefaultEventsMap> | undefined,
-  callback: CallbackFn
-) {
+export function getUserData(socket: Socket, callback: CallbackFn) {
   if (!socket) {
     callback({
       status: "err",
@@ -89,8 +86,8 @@ function getUserData(
  * @param {Socket} socket The socket
  * @param {number} points The points to set for the socket
  */
-function setPoints(
-  socket: RemoteSocket<DefaultEventsMap> | undefined,
+export function setPoints(
+  socket: Socket,
   points: number,
   callback: CallbackFn
 ) {
@@ -121,8 +118,8 @@ function setPoints(
  * @param {Socket} socket The socket
  * @param {number} points The points to set for the socket
  */
-function addPoints(
-  socket: RemoteSocket<DefaultEventsMap> | undefined,
+export function addPoints(
+  socket: Socket,
   points: number,
   callback: CallbackFn
 ) {
@@ -152,10 +149,7 @@ function addPoints(
  * @param {Server} io The server object
  * @param {Socket} socket The socket
  */
-function getPoints(
-  socket: RemoteSocket<DefaultEventsMap> | undefined,
-  callback: CallbackFn
-) {
+export function getPoints(socket: Socket, callback: CallbackFn) {
   if (!socket) {
     callback({
       status: "err",
@@ -175,10 +169,15 @@ function getPoints(
   }
 }
 
-async function getSocketById(
-  io: Server,
-  id: string
-): Promise<RemoteSocket<DefaultEventsMap[]>> {
+/**
+ * Returns a promise containing the socket object with the specified id
+ *
+ * @export
+ * @param {Server} io The server object
+ * @param {string} id The id of the socket
+ * @return {*}  {Promise<any>} Promise containing the socket
+ */
+export async function getSocketById(io: Server, id: string): Promise<any> {
   let sockets = await io.in(id).fetchSockets();
 
   if (sockets.length == 0) {

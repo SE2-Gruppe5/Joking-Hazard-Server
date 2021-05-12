@@ -1,9 +1,9 @@
 import { createServer } from "http";
-import { Server, Socket } from "socket.io";
-import { CallbackFn, Message, MessageType } from "../models/types";
+import { Server } from "socket.io";
+import { Message, MessageType, Piles } from "../models/types";
 import { registerRoomHandlers } from "../handlers/roomHandlers";
 import { registerUserHandlers } from "../handlers/userHandlers";
-import { DefaultEventsMap } from "socket.io/dist/typed-events";
+import { registerCardHandlers } from "../handlers/cardHandlers";
 
 const Client = require("socket.io-client");
 
@@ -30,6 +30,7 @@ describe("tests", () => {
         serverSocket = socket;
         registerRoomHandlers(io, socket);
         registerUserHandlers(io, socket);
+        registerCardHandlers(io, socket);
       });
       done();
     });
@@ -77,7 +78,7 @@ describe("tests", () => {
   });
 
   test("test room:create while already in a room", (done) => {
-    clientSockets[0].emit("room:create", (response) => {
+    clientSockets[0].emit("room:create", (_response) => {
       clientSockets[0].emit("room:create", (response) => {
         expect(
           response.status === "err" && response.msg === Message.already_in_room
@@ -88,7 +89,7 @@ describe("tests", () => {
   });
 
   test("test room:create while already in a room", (done) => {
-    clientSockets[0].emit("room:create", (response) => {
+    clientSockets[0].emit("room:create", (_response) => {
       clientSockets[0].emit("room:create", (response) => {
         expect(
           response.status === "err" && response.msg === Message.already_in_room
@@ -220,7 +221,7 @@ describe("tests", () => {
     });
 
     clientSockets[0].emit("room:create", (response) => {
-      clientSockets[1].emit("room:join", response.roomCode, (response) => {
+      clientSockets[1].emit("room:join", response.roomCode, (_response) => {
         clientSockets[0].emit("room:leave");
       });
     });
@@ -241,22 +242,12 @@ describe("tests", () => {
     clientSockets[0].emit("room:create", (response) => {
       clientSockets[1].emit("room:join", response.roomCode);
       clientSockets[2].emit("room:join", response.roomCode);
-      clientSockets[0].emit("room:players", response.roomCode, (response) => {
+      clientSockets[0].emit("room:players", (response) => {
         expect(response.status === "ok" && response.users.length === 3);
         done();
       });
     });
   });
-
-  test("test room:players when room doesn't exist", (done) => {
-    clientSockets[0].emit("room:players", "0000", (response) => {
-      expect(
-        response.status === "err" && response.msg === Message.room_doesnt_exist
-      );
-      done();
-    });
-  });
-
   // user tests
 
   test("test user:data:get", (done) => {
@@ -276,7 +267,7 @@ describe("tests", () => {
   });
 
   test("test user:points:get", (done) => {
-    clientSockets[0].emit("room:create", (response) => {
+    clientSockets[0].emit("room:create", (_response) => {
       clientSockets[0].emit(
         "user:points:get",
         clientSockets[0].id,
@@ -303,7 +294,7 @@ describe("tests", () => {
   });
 
   test("test user:points:get when user doesn't exist", (done) => {
-    clientSockets[0].emit("room:create", (response) => {
+    clientSockets[0].emit("room:create", (_response) => {
       clientSockets[0].emit("user:points:get", "0", (response) => {
         expect(
           response.status === "err" &&
@@ -315,12 +306,12 @@ describe("tests", () => {
   });
 
   test("test user:points:add", (done) => {
-    clientSockets[0].emit("room:create", (response) => {
+    clientSockets[0].emit("room:create", (_response) => {
       clientSockets[0].emit(
         "user:points:add",
         clientSockets[0].id,
         1,
-        (response) => {
+        (_response) => {
           clientSockets[0].emit(
             "user:points:get",
             clientSockets[0].id,
@@ -339,7 +330,7 @@ describe("tests", () => {
       "user:points:add",
       clientSockets[0].id,
       1,
-      (response) => {
+      (_response) => {
         clientSockets[0].emit(
           "user:points:get",
           clientSockets[0].id,
@@ -356,12 +347,12 @@ describe("tests", () => {
   });
 
   test("test user:points:add when user doesn't exist", (done) => {
-    clientSockets[0].emit("room:create", (response) => {
+    clientSockets[0].emit("room:create", (_response) => {
       clientSockets[0].emit(
         "user:points:add",
         clientSockets[0].id,
         1,
-        (response) => {
+        (_response) => {
           clientSockets[0].emit("user:points:get", "0", (response) => {
             expect(
               response.status === "err" &&
@@ -375,12 +366,12 @@ describe("tests", () => {
   });
 
   test("test user:points:set", (done) => {
-    clientSockets[0].emit("room:create", (response) => {
+    clientSockets[0].emit("room:create", (_response) => {
       clientSockets[0].emit(
         "user:points:set",
         clientSockets[0].id,
         5,
-        (response) => {
+        (_response) => {
           clientSockets[0].emit(
             "user:points:get",
             clientSockets[0].id,
@@ -399,7 +390,7 @@ describe("tests", () => {
       "user:points:set",
       clientSockets[0].id,
       1,
-      (response) => {
+      (_response) => {
         clientSockets[0].emit(
           "user:points:get",
           clientSockets[0].id,
@@ -416,12 +407,12 @@ describe("tests", () => {
   });
 
   test("test user:points:set when user doesn't exist", (done) => {
-    clientSockets[0].emit("room:create", (response) => {
+    clientSockets[0].emit("room:create", (_response) => {
       clientSockets[0].emit(
         "user:points:set",
         clientSockets[0].id,
         5,
-        (response) => {
+        (_response) => {
           clientSockets[0].emit("user:points:get", "0", (response) => {
             expect(
               response.status === "err" &&
@@ -432,5 +423,101 @@ describe("tests", () => {
         }
       );
     });
+  });
+
+  test("test card:move", (done) => {
+    clientSockets[0].emit("room:create", (_response) => {
+      clientSockets[0].emit(
+        "card:move",
+        "001",
+        Piles.deck,
+        Piles.discard,
+        0,
+        0,
+        (response) => {
+          expect(
+            response.status === "ok" && response.msg === Message.card_moved
+          );
+          done();
+        }
+      );
+    });
+  });
+
+  test("test card:move with invalid index", (done) => {
+    clientSockets[0].emit("room:create", (_response) => {
+      clientSockets[0].emit(
+        "card:move",
+        "001",
+        Piles.deck,
+        Piles.discard,
+        0,
+        9,
+        (response) => {
+          expect(
+            response.status === "err" && response.msg === Message.pile_is_full
+          );
+          done();
+        }
+      );
+    });
+  });
+
+  test("test card:move with invalid pile", (done) => {
+    clientSockets[0].emit("room:create", (_response) => {
+      clientSockets[0].emit(
+        "card:move",
+        "001",
+        Piles.deck,
+        -1,
+        0,
+        0,
+        (response) => {
+          expect(
+            response.status === "err" &&
+              response.msg === Message.pile_doesnt_exist
+          );
+          done();
+        }
+      );
+    });
+  });
+
+  test("test card:move with invalid card", (done) => {
+    clientSockets[0].emit("room:create", (response) => {
+      clientSockets[0].emit(
+        "card:move",
+        "456",
+        Piles.deck,
+        Piles.discard,
+        0,
+        0,
+        (response) => {
+          expect(
+            response.status === "err" &&
+              response.msg === Message.card_doesnt_exist
+          );
+          done();
+        }
+      );
+    });
+  });
+
+  test("test card:move with user not in a room", (done) => {
+    clientSockets[0].emit(
+      "card:move",
+      "001",
+      Piles.deck,
+      Piles.discard,
+      0,
+      0,
+      (response) => {
+        expect(
+          response.status === "err" &&
+            response.msg === Message.user_not_in_a_room
+        );
+        done();
+      }
+    );
   });
 });
