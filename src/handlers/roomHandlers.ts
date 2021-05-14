@@ -69,9 +69,9 @@ export function createRoom(io: Server, socket: Socket, callback?: CallbackFn) {
         msg: Message.no_free_room,
       });
     } else {
-      createCardsMap(socket.data.currentRoom);
+      createCardsMap(room);
       games.set(room, {
-        players: [socket.id],
+        players: [],
         currentPlayer: 0,
         currentJudge: 0,
         playersLeft: 0,
@@ -327,7 +327,7 @@ export function playerDone(io: Server, socket: Socket, callback?: CallbackFn) {
   let roomCode = socket.data.currentRoom;
   let game = games.get(roomCode);
   if (game.playersLeft === 0) {
-    getJudge(io, roomCode).then((socket) => {
+    getJudge(io, socket).then((socket) => {
       socket.emit("room:all_cards_played");
     });
 
