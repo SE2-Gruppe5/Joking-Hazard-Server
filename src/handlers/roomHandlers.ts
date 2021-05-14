@@ -378,6 +378,7 @@ export function playerEnteredGame(
         io.in(roomCode).emit("room:admin_started_game");
       }
       if (game.playersLeft === sockets.length) {
+        game.playersLeft--;
         io.in(roomCode).emit("room:ready_to_play");
         io.to(game.players[game.currentPlayer]).emit("room:your_turn", {
           judge: true,
