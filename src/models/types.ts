@@ -42,7 +42,7 @@ export enum Message {
   card_moved = "card_moved",
   card_doesnt_exist = "card_doesnt_exist",
   pile_doesnt_exist = "pile_doesnt_exist",
-  pile_is_full = "pile_is_full",
+  invalid_pile_index = "invalid_pile_index",
 }
 
 export enum Piles {

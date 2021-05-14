@@ -453,7 +453,8 @@ describe("tests", () => {
         9,
         (response) => {
           expect(
-            response.status === "err" && response.msg === Message.pile_is_full
+            response.status === "err" &&
+              response.msg === Message.invalid_pile_index
           );
           done();
         }
