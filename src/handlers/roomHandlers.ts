@@ -1,7 +1,7 @@
 import { Server, Socket } from "socket.io";
 import { MessageType, Message, CallbackFn, GameObject } from "../models/types";
 import { getSocketById } from "./userHandlers";
-import { removeCardsMap } from "./cardHandlers";
+import { removeCardsMap, createCardsMap } from "./cardHandlers";
 
 let games = new Map<string, GameObject>();
 
@@ -69,6 +69,7 @@ export function createRoom(io: Server, socket: Socket, callback?: CallbackFn) {
         msg: Message.no_free_room,
       });
     } else {
+      createCardsMap(socket.data.currentRoom);
       games.set(room, {
         players: [socket.id],
         currentPlayer: 0,
@@ -184,7 +185,7 @@ export function leaveRoom(io: Server, socket: Socket, callback?: CallbackFn) {
     }
     socket.data.currentRoom = undefined;
     socket.data.admin = undefined;
-    if (io.sockets.adapter.rooms.get(roomCode).size == 0) {
+    if (io.sockets.adapter.rooms.get(roomCode)?.size === 0) {
       removeCardsMap(roomCode);
     }
     callback({
