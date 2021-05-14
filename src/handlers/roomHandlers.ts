@@ -69,9 +69,9 @@ export function createRoom(io: Server, socket: Socket, callback?: CallbackFn) {
         msg: Message.no_free_room,
       });
     } else {
-      createCardsMap(socket.data.currentRoom);
+      createCardsMap(room);
       games.set(room, {
-        players: [socket.id],
+        players: [],
         currentPlayer: 0,
         currentJudge: 0,
         playersLeft: 0,
@@ -327,16 +327,19 @@ export function playerDone(io: Server, socket: Socket, callback?: CallbackFn) {
   let roomCode = socket.data.currentRoom;
   let game = games.get(roomCode);
   if (game.playersLeft === 0) {
-    getJudge(io, roomCode).then((socket) => {
+    getJudge(io, socket).then((socket) => {
       socket.emit("room:all_cards_played");
     });
 
     game.playersLeft = game.players.length - 1;
-    game.currentPlayer = 0;
     game.currentRound += 1;
     game.currentJudge += 1;
+    game.currentPlayer = game.currentJudge;
+    let currentPlayerId = game.players[game.currentPlayer];
+    io.to(currentPlayerId).emit("room:your_turn");
   } else {
-    game.currentPlayer += 1;
+    game.currentPlayer =
+      game.currentPlayer < game.players.length - 1 ? game.currentPlayer + 1 : 0;
     game.playersLeft -= 1;
     let currentPlayerId = game.players[game.currentPlayer];
     io.to(currentPlayerId).emit("room:your_turn");
@@ -378,6 +381,7 @@ export function playerEnteredGame(
         io.in(roomCode).emit("room:admin_started_game");
       }
       if (game.playersLeft === sockets.length) {
+        game.playersLeft--;
         io.in(roomCode).emit("room:ready_to_play");
         io.to(game.players[game.currentPlayer]).emit("room:your_turn", {
           judge: true,
