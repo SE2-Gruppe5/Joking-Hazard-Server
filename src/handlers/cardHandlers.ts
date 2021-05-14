@@ -70,19 +70,46 @@ export function moveCard(
       });
     } else if (
       !(
-        targetPile === Piles.deck ||
-        (targetPile <= Piles.player4 && targetIndex <= 8) ||
-        targetIndex <= 1
+        (targetPile >= Piles.player1 &&
+          targetPile <= Piles.player4 &&
+          targetIndex < 8) ||
+        targetIndex === 0
       )
     ) {
       callback({
         status: "err",
-        msg: Message.pile_is_full,
+        msg: Message.invalid_pile_index,
+      });
+    } else if (
+      !(
+        (sourcePile >= Piles.player1 &&
+          sourcePile <= Piles.player4 &&
+          sourceIndex < 8) ||
+        (sourcePile === Piles.submission && sourceIndex < 3) ||
+        sourceIndex === 0
+      )
+    ) {
+      callback({
+        status: "err",
+        msg: Message.invalid_pile_index,
       });
     } else {
-      let cardId = cardsMap.get(sourcePile)[sourceIndex];
-      cardsMap.get(sourcePile)[sourceIndex] = null;
-      cardsMap.get(targetPile)[targetIndex] = cardId;
+      let cardId: string;
+      // If we're taking a card from the deck, we always want to take the top card and shift the rest forward
+      if (sourcePile === Piles.deck) {
+        cardId = cardsMap.get(sourcePile).shift();
+        cardsMap.get(sourcePile).push(null);
+      } else {
+        cardId = cardsMap.get(sourcePile)[sourceIndex];
+        cardsMap.get(sourcePile)[sourceIndex] = null;
+      }
+
+      // If we're putting a card on the discard or submission pile , we don't need an index, we just push the card onto it
+      if (targetPile === Piles.discard || targetPile === Piles.submission) {
+        cardsMap.get(targetPile).push(cardId);
+      } else {
+        cardsMap.get(targetPile)[targetIndex] = cardId;
+      }
       io.in(socket.data.currentRoom).emit("card:moved", {
         cardId,
         sourcePile,
