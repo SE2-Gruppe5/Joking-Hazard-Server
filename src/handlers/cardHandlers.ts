@@ -127,8 +127,8 @@ export function moveCard(
 
 export function createCardsMap(roomCode: string) {
   let cardsMap = new Map<Piles, string[]>();
-  let cards = new Array<string>(311);
-  for (let i = 0; i <= 310; i++) {
+  let cards = new Array<string>();
+  for (let i = 1; i <= 310; i++) {
     cards.push(pad(i, 3));
   }
 
