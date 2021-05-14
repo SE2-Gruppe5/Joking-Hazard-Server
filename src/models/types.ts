@@ -59,8 +59,8 @@ export enum Piles {
 }
 
 export interface CallbackObject {
-  status: string;
-  msg: string;
+  status: "ok" | "err";
+  msg: Message;
   [args: string]: any;
 }
 
