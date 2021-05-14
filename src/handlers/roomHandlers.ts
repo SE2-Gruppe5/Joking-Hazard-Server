@@ -332,11 +332,14 @@ export function playerDone(io: Server, socket: Socket, callback?: CallbackFn) {
     });
 
     game.playersLeft = game.players.length - 1;
-    game.currentPlayer = 0;
     game.currentRound += 1;
     game.currentJudge += 1;
+    game.currentPlayer = game.currentJudge;
+    let currentPlayerId = game.players[game.currentPlayer];
+    io.to(currentPlayerId).emit("room:your_turn");
   } else {
-    game.currentPlayer += 1;
+    game.currentPlayer =
+      game.currentPlayer < game.players.length - 1 ? game.currentPlayer + 1 : 0;
     game.playersLeft -= 1;
     let currentPlayerId = game.players[game.currentPlayer];
     io.to(currentPlayerId).emit("room:your_turn");
