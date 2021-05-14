@@ -429,7 +429,6 @@ describe("tests", () => {
     clientSockets[0].emit("room:create", (_response) => {
       clientSockets[0].emit(
         "card:move",
-        "001",
         Piles.deck,
         Piles.discard,
         0,
@@ -448,7 +447,6 @@ describe("tests", () => {
     clientSockets[0].emit("room:create", (_response) => {
       clientSockets[0].emit(
         "card:move",
-        "001",
         Piles.deck,
         Piles.discard,
         0,
@@ -465,21 +463,13 @@ describe("tests", () => {
 
   test("test card:move with invalid pile", (done) => {
     clientSockets[0].emit("room:create", (_response) => {
-      clientSockets[0].emit(
-        "card:move",
-        "001",
-        Piles.deck,
-        -1,
-        0,
-        0,
-        (response) => {
-          expect(
-            response.status === "err" &&
-              response.msg === Message.pile_doesnt_exist
-          );
-          done();
-        }
-      );
+      clientSockets[0].emit("card:move", Piles.deck, -1, 0, 0, (response) => {
+        expect(
+          response.status === "err" &&
+            response.msg === Message.pile_doesnt_exist
+        );
+        done();
+      });
     });
   });
 
@@ -487,7 +477,6 @@ describe("tests", () => {
     clientSockets[0].emit("room:create", (response) => {
       clientSockets[0].emit(
         "card:move",
-        "456",
         Piles.deck,
         Piles.discard,
         0,
@@ -506,7 +495,6 @@ describe("tests", () => {
   test("test card:move with user not in a room", (done) => {
     clientSockets[0].emit(
       "card:move",
-      "001",
       Piles.deck,
       Piles.discard,
       0,

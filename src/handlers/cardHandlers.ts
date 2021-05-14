@@ -2,25 +2,7 @@ import { Server, Socket } from "socket.io";
 import { Message, CallbackFn, Piles } from "../models/types";
 import { pad } from "./roomHandlers";
 
-/**
- * A map mapping every card to a pile
- */
-let cardsMap = new Map<Piles, string[]>();
-let cards = new Array<string>(311);
-for (let i = 0; i <= 310; i++) {
-  cards.push(pad(i, 3));
-}
-
-cardsMap.set(Piles.deck, cards);
-cardsMap.set(Piles.panel1, []);
-cardsMap.set(Piles.panel2, []);
-cardsMap.set(Piles.panel3, []);
-cardsMap.set(Piles.player1, []);
-cardsMap.set(Piles.player2, []);
-cardsMap.set(Piles.player3, []);
-cardsMap.set(Piles.player4, []);
-cardsMap.set(Piles.submission, []);
-cardsMap.set(Piles.discard, []);
+const cardsMaps = new Map<string, Map<Piles, string[]>>();
 
 /**
  * Registers card handlers
@@ -33,7 +15,6 @@ export function registerCardHandlers(io: Server, socket: Socket) {
   socket.on(
     "card:move",
     (
-      cardId: string,
       sourcePile: number,
       targetPile: number,
       sourceIndex: number,
@@ -43,7 +24,6 @@ export function registerCardHandlers(io: Server, socket: Socket) {
       moveCard(
         io,
         socket,
-        cardId,
         sourcePile,
         targetPile,
         sourceIndex,
@@ -68,7 +48,6 @@ export function registerCardHandlers(io: Server, socket: Socket) {
 export function moveCard(
   io: Server,
   socket: Socket,
-  cardId: string,
   sourcePile: Piles,
   targetPile: Piles,
   sourceIndex: number,
@@ -81,12 +60,10 @@ export function moveCard(
       msg: Message.user_not_in_a_room,
     });
   } else {
-    if (+cardId > 310) {
-      callback({
-        status: "err",
-        msg: Message.card_doesnt_exist,
-      });
-    } else if (!Piles[targetPile]) {
+    let cardsMap =
+      cardsMaps.get(socket.data.currentRoom) ??
+      createCardsMap(socket.data.currentRoom);
+    if (!Piles[targetPile]) {
       callback({
         status: "err",
         msg: Message.pile_doesnt_exist,
@@ -94,8 +71,8 @@ export function moveCard(
     } else if (
       !(
         targetPile === Piles.deck ||
-        (targetPile <= Piles.player4 && targetIndex >= 8) ||
-        targetIndex >= 1
+        (targetPile <= Piles.player4 && targetIndex <= 8) ||
+        targetIndex <= 1
       )
     ) {
       callback({
@@ -103,6 +80,7 @@ export function moveCard(
         msg: Message.pile_is_full,
       });
     } else {
+      let cardId = cardsMap.get(sourcePile)[sourceIndex];
       cardsMap.get(sourcePile)[sourceIndex] = null;
       cardsMap.get(targetPile)[targetIndex] = cardId;
       io.in(socket.data.currentRoom).emit("card:moved", {
@@ -118,4 +96,37 @@ export function moveCard(
       });
     }
   }
+}
+
+export function createCardsMap(roomCode: string) {
+  let cardsMap = new Map<Piles, string[]>();
+  let cards = new Array<string>(311);
+  for (let i = 0; i <= 310; i++) {
+    cards.push(pad(i, 3));
+  }
+
+  // Shuffle cards
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+
+  cardsMap.set(Piles.deck, cards);
+  cardsMap.set(Piles.panel1, []);
+  cardsMap.set(Piles.panel2, []);
+  cardsMap.set(Piles.panel3, []);
+  cardsMap.set(Piles.player1, []);
+  cardsMap.set(Piles.player2, []);
+  cardsMap.set(Piles.player3, []);
+  cardsMap.set(Piles.player4, []);
+  cardsMap.set(Piles.submission, []);
+  cardsMap.set(Piles.discard, []);
+
+  cardsMaps.set(roomCode, cardsMap);
+
+  return cardsMaps.get(roomCode);
+}
+
+export function removeCardsMap(roomCode: string) {
+  cardsMaps.delete(roomCode);
 }
