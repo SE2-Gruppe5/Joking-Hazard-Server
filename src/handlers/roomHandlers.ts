@@ -336,13 +336,13 @@ export function playerDone(io: Server, socket: Socket, callback?: CallbackFn) {
     game.currentJudge += 1;
     game.currentPlayer = game.currentJudge;
     let currentPlayerId = game.players[game.currentPlayer];
-    io.to(currentPlayerId).emit("room:your_turn");
+    io.to(currentPlayerId).emit("room:your_turn", { judge: true });
   } else {
     game.currentPlayer =
       game.currentPlayer < game.players.length - 1 ? game.currentPlayer + 1 : 0;
     game.playersLeft -= 1;
     let currentPlayerId = game.players[game.currentPlayer];
-    io.to(currentPlayerId).emit("room:your_turn");
+    io.to(currentPlayerId).emit("room:your_turn", { judge: false });
   }
 }
 
