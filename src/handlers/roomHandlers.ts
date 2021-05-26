@@ -13,8 +13,8 @@ let games = new Map<string, GameObject>();
  * @param {Socket} socket The socket
  */
 export function registerRoomHandlers(io: Server, socket: Socket) {
-  socket.on("room:create", (callback?: CallbackFn) =>
-    createRoom(io, socket, callback ?? (() => {}))
+  socket.on("room:create", ( timeLimit: number ,callback?: CallbackFn) =>
+    createRoom(io, socket, timeLimit, callback ?? (() => {}))
   );
 
   socket.on("room:close", (callback?: CallbackFn) =>
@@ -53,9 +53,15 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
  *
  * @param {Server} io The server object
  * @param {Socket} socket The socket
+ * @param timeLimit timeLimit per turn set by admin
  * @param {CallbackFn} callback The callback sent to the caller
  */
-export function createRoom(io: Server, socket: Socket, callback?: CallbackFn) {
+export function createRoom(
+  io: Server,
+  socket: Socket,
+  timeLimit: number,
+  callback?: CallbackFn
+) {
   if (socket.data.currentRoom) {
     callback({
       status: "err",
@@ -76,6 +82,7 @@ export function createRoom(io: Server, socket: Socket, callback?: CallbackFn) {
         currentJudge: 0,
         playersLeft: 0,
         currentRound: 1,
+        timeLimit
       });
       socket.join(room);
       socket.data.currentRoom = room;
@@ -382,7 +389,9 @@ export function playerEnteredGame(
       }
       if (game.playersLeft === sockets.length) {
         game.playersLeft--;
-        io.in(roomCode).emit("room:ready_to_play");
+        io.in(roomCode).emit("room:ready_to_play", {
+          timeLimit: game.timeLimit
+        });
         io.to(game.players[game.currentPlayer]).emit("room:your_turn", {
           judge: true,
         });
