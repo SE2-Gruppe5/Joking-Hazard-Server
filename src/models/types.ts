@@ -72,4 +72,5 @@ export interface GameObject {
   currentJudge: number;
   playersLeft: number;
   currentRound: number;
+  timeLimit: number;
 }
