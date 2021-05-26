@@ -13,7 +13,7 @@ let games = new Map<string, GameObject>();
  * @param {Socket} socket The socket
  */
 export function registerRoomHandlers(io: Server, socket: Socket) {
-  socket.on("room:create", ( timeLimit: number ,callback?: CallbackFn) =>
+  socket.on("room:create", (timeLimit: number ,callback?: CallbackFn) =>
     createRoom(io, socket, timeLimit, callback ?? (() => {}))
   );
 
