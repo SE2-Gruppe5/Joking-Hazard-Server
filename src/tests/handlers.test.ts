@@ -474,25 +474,6 @@ describe("tests", () => {
     });
   });
 
-  test("test card:move with invalid card", (done) => {
-    clientSockets[0].emit("room:create", (response) => {
-      clientSockets[0].emit(
-        "card:move",
-        Piles.deck,
-        Piles.discard,
-        0,
-        0,
-        (response) => {
-          expect(
-            response.status === "err" &&
-              response.msg === Message.card_doesnt_exist
-          );
-          done();
-        }
-      );
-    });
-  });
-
   test("test card:move with user not in a room", (done) => {
     clientSockets[0].emit(
       "card:move",
