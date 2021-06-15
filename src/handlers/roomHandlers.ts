@@ -44,6 +44,10 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
   socket.on("room:enteredGame", (callback?: CallbackFn) =>
     playerEnteredGame(io, socket, callback ?? (() => {}))
   );
+
+  socket.on("room:room:storyConfirmed", (userId: string, callback?: CallbackFn) =>
+      storyConfirmed(io, socket, userId, callback ?? (() => {}))
+  );
 }
 
 /**
@@ -338,12 +342,6 @@ export function playerDone(io: Server, socket: Socket, callback?: CallbackFn) {
       socket.emit("room:all_cards_played");
     });
 
-    game.playersLeft = game.players.length - 1;
-    game.currentRound += 1;
-    game.currentJudge += 1;
-    game.currentPlayer = game.currentJudge;
-    let currentPlayerId = game.players[game.currentPlayer];
-    io.to(currentPlayerId).emit("room:your_turn", { judge: true });
   } else {
     game.currentPlayer =
       game.currentPlayer < game.players.length - 1 ? game.currentPlayer + 1 : 0;
@@ -353,6 +351,24 @@ export function playerDone(io: Server, socket: Socket, callback?: CallbackFn) {
   }
 }
 
+export function storyConfirmed(io: Server, socket: Socket, userId: string,callback?: CallbackFn){
+  let roomCode = socket.data.currentRoom;
+  let game = games.get(roomCode);
+
+  game.playersLeft = game.players.length - 1;
+  game.currentRound += 1;
+  game.currentJudge += 1;
+  game.currentPlayer = game.currentJudge;
+  let currentPlayerId = game.players[game.currentPlayer];
+  getSocketById(io, userId).then((socket) => {
+    io.to(roomCode).emit("room:winner", { player: socket.data.name });
+  });
+  setTimeout(() => {
+    io.to(currentPlayerId).emit("room:your_turn", { judge: true });
+  }, 4000)
+
+
+}
 /**
  * Returns a promise containing the current judge
  *
