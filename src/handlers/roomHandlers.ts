@@ -361,7 +361,7 @@ export function storyConfirmed(io: Server, socket: Socket, userId: string,callba
   game.currentPlayer = game.currentJudge;
   let currentPlayerId = game.players[game.currentPlayer];
   getSocketById(io, userId).then((socket) => {
-    io.in(roomCode).emit("room:winner", { player: userId });
+    io.in(roomCode).emit("room:winner", { player: socket.data.name });
     setTimeout(() => {
       io.to(currentPlayerId).emit("room:your_turn", { judge: true });
     }, 4000)
