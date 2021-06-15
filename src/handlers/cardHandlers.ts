@@ -116,6 +116,7 @@ export function moveCard(
         sourceIndex,
         targetPile,
         targetIndex,
+        socketId: socket.id,
       });
       callback({
         status: "ok",

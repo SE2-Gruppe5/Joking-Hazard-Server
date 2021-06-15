@@ -13,7 +13,7 @@ let games = new Map<string, GameObject>();
  * @param {Socket} socket The socket
  */
 export function registerRoomHandlers(io: Server, socket: Socket) {
-  socket.on("room:create", (timeLimit: number ,callback?: CallbackFn) =>
+  socket.on("room:create", (timeLimit: number, callback?: CallbackFn) =>
     createRoom(io, socket, timeLimit, callback ?? (() => {}))
   );
 
@@ -43,6 +43,10 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
 
   socket.on("room:enteredGame", (callback?: CallbackFn) =>
     playerEnteredGame(io, socket, callback ?? (() => {}))
+  );
+
+  socket.on("room:storyConfirmed", (userId: string, cardId: string, callback?: CallbackFn) =>
+    storyConfirmed(io, socket, userId, cardId, callback ?? (() => {}))
   );
 }
 
@@ -82,7 +86,7 @@ export function createRoom(
         currentJudge: 0,
         playersLeft: 0,
         currentRound: 1,
-        timeLimit
+        timeLimit,
       });
       socket.join(room);
       socket.data.currentRoom = room;
@@ -338,12 +342,6 @@ export function playerDone(io: Server, socket: Socket, callback?: CallbackFn) {
       socket.emit("room:all_cards_played");
     });
 
-    game.playersLeft = game.players.length - 1;
-    game.currentRound += 1;
-    game.currentJudge += 1;
-    game.currentPlayer = game.currentJudge;
-    let currentPlayerId = game.players[game.currentPlayer];
-    io.to(currentPlayerId).emit("room:your_turn", { judge: true });
   } else {
     game.currentPlayer =
       game.currentPlayer < game.players.length - 1 ? game.currentPlayer + 1 : 0;
@@ -353,6 +351,24 @@ export function playerDone(io: Server, socket: Socket, callback?: CallbackFn) {
   }
 }
 
+export function storyConfirmed(io: Server, socket: Socket, userId: string, cardId: string,callback?: CallbackFn){
+  let roomCode = socket.data.currentRoom;
+  let game = games.get(roomCode);
+
+  game.playersLeft = game.players.length - 1;
+  game.currentRound += 1;
+  game.currentJudge =
+      game.currentJudge < game.players.length - 1 ? game.currentJudge + 1 : 0;
+  game.currentPlayer = game.currentJudge;
+  let currentPlayerId = game.players[game.currentPlayer];
+  getSocketById(io, userId).then((socket) => {
+    io.in(roomCode).emit("room:winner", { player: socket.data.name, cardId});
+    setTimeout(() => {
+      io.to(currentPlayerId).emit("room:your_turn", { judge: true });
+    }, 4000)
+  });
+
+}
 /**
  * Returns a promise containing the current judge
  *
