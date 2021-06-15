@@ -13,7 +13,7 @@ let games = new Map<string, GameObject>();
  * @param {Socket} socket The socket
  */
 export function registerRoomHandlers(io: Server, socket: Socket) {
-  socket.on("room:create", (timeLimit: number ,callback?: CallbackFn) =>
+  socket.on("room:create", (timeLimit: number, callback?: CallbackFn) =>
     createRoom(io, socket, timeLimit, callback ?? (() => {}))
   );
 
@@ -46,7 +46,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
   );
 
   socket.on("room:storyConfirmed", (userId: string, callback?: CallbackFn) =>
-      storyConfirmed(io, socket, userId, callback ?? (() => {}))
+    storyConfirmed(io, socket, userId, callback ?? (() => {}))
   );
 }
 
@@ -86,7 +86,7 @@ export function createRoom(
         currentJudge: 0,
         playersLeft: 0,
         currentRound: 1,
-        timeLimit
+        timeLimit,
       });
       socket.join(room);
       socket.data.currentRoom = room;
@@ -357,7 +357,8 @@ export function storyConfirmed(io: Server, socket: Socket, userId: string,callba
 
   game.playersLeft = game.players.length - 1;
   game.currentRound += 1;
-  game.currentJudge += 1;
+  game.currentJudge =
+      game.currentJudge < game.players.length - 1 ? game.currentJudge + 1 : 0;
   game.currentPlayer = game.currentJudge;
   let currentPlayerId = game.players[game.currentPlayer];
   getSocketById(io, userId).then((socket) => {
