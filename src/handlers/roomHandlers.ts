@@ -45,8 +45,8 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
     playerEnteredGame(io, socket, callback ?? (() => {}))
   );
 
-  socket.on("room:storyConfirmed", (userId: string, callback?: CallbackFn) =>
-    storyConfirmed(io, socket, userId, callback ?? (() => {}))
+  socket.on("room:storyConfirmed", (userId: string, cardId: string, callback?: CallbackFn) =>
+    storyConfirmed(io, socket, userId, cardId, callback ?? (() => {}))
   );
 }
 
@@ -351,7 +351,7 @@ export function playerDone(io: Server, socket: Socket, callback?: CallbackFn) {
   }
 }
 
-export function storyConfirmed(io: Server, socket: Socket, userId: string,callback?: CallbackFn){
+export function storyConfirmed(io: Server, socket: Socket, userId: string, cardId: string,callback?: CallbackFn){
   let roomCode = socket.data.currentRoom;
   let game = games.get(roomCode);
 
@@ -362,7 +362,7 @@ export function storyConfirmed(io: Server, socket: Socket, userId: string,callba
   game.currentPlayer = game.currentJudge;
   let currentPlayerId = game.players[game.currentPlayer];
   getSocketById(io, userId).then((socket) => {
-    io.in(roomCode).emit("room:winner", { player: socket.data.name });
+    io.in(roomCode).emit("room:winner", { player: socket.data.name, cardId});
     setTimeout(() => {
       io.to(currentPlayerId).emit("room:your_turn", { judge: true });
     }, 4000)
