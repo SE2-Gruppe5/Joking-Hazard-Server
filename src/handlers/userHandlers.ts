@@ -12,12 +12,12 @@ import { getGames } from "./roomHandlers";
  */
 export function registerUserHandlers(io: Server, socket: Socket) {
   socket.on("user:name:change", (name: string, callback?: CallbackFn) =>
-    changeName(socket, name, callback ?? (() => {}))
+    changeName(socket, name, callback ?? (() => { }))
   );
 
   socket.on("user:data:get", (id: string, callback?: CallbackFn) =>
     getSocketById(io, id).then((socket) => {
-      getUserData(socket, callback ?? (() => {}));
+      getUserData(socket, callback ?? (() => { }));
     })
   );
 
@@ -25,19 +25,19 @@ export function registerUserHandlers(io: Server, socket: Socket) {
     "user:points:set",
     (id: string, points: number, callback?: CallbackFn) =>
       getSocketById(io, id).then((socket) => {
-        setPoints(io, socket, points, callback ?? (() => {}));
+        setPoints(io, socket, points, callback ?? (() => { }));
       })
   );
   socket.on(
     "user:points:add",
     (id: string, points: number, callback?: CallbackFn) =>
       getSocketById(io, id).then((socket) => {
-        addPoints(io, socket, points, callback ?? (() => {}));
+        addPoints(io, socket, points, callback ?? (() => { }));
       })
   );
   socket.on("user:points:get", (id: string, callback?: CallbackFn) =>
     getSocketById(io, id).then((socket) => {
-      getPoints(socket, callback ?? (() => {}));
+      getPoints(socket, callback ?? (() => { }));
     })
   );
 }
@@ -100,21 +100,24 @@ export function setPoints(
     });
   } else if (socket.data.currentRoom) {
     socket.data.points = points;
+
+    let roomCode = socket.data.currentRoom;
+    let games = getGames();
+    let game = games.get(roomCode);
+
+    if (socket.data.point >= game.pointLimit) {
+      io.in(roomCode).emit("room:gameOver", {
+        winner: socket.data
+      });
+    }
+
     callback({
       status: "ok",
       msg: Message.user_set_points,
       points: socket.data.points,
     });
 
-    let roomCode = socket.data.currentRoom;
-    let games = getGames();
-    let game = games.get(roomCode);
 
-    if (socket.data.point >= game.pointLimit  ) {
-      io.in(roomCode).emit("room:gameOver", {
-        winner: socket.data
-      });
-    }
   } else {
     callback({
       status: "err",
@@ -143,22 +146,24 @@ export function addPoints(
     });
   } else if (socket.data.currentRoom) {
     socket.data.points = points;
-    
+
+    let roomCode = socket.data.currentRoom;
+    let games = getGames();
+    let game = games.get(roomCode);
+
+    if (socket.data.point >= game.pointLimit) {
+      io.in(roomCode).emit("room:gameOver", {
+        winner: socket.data
+      });
+    }
+
     callback({
       status: "ok",
       msg: Message.user_set_points,
       points: socket.data.points,
     });
 
-    let roomCode = socket.data.currentRoom;
-    let games = getGames();
-    let game = games.get(roomCode);
 
-    if (socket.data.point >= game.pointLimit  ) {
-      io.in(roomCode).emit("room:gameOver", {
-        winner: socket.data
-      });
-    }
   } else {
     callback({
       status: "err",
