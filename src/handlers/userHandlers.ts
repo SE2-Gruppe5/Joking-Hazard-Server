@@ -47,6 +47,7 @@ export function registerUserHandlers(io: Server, socket: Socket) {
  * @param {Server} io The server object
  * @param {Socket} socket The socket
  * @param {string} name The username to be set
+ * @param {CallbackFn} [callback] The callback sent to the client
  */
 export function changeName(socket: Socket, name: string, callback: CallbackFn) {
   socket.data.name = name;
@@ -60,9 +61,8 @@ export function changeName(socket: Socket, name: string, callback: CallbackFn) {
 /**
  * Sends the user data to the calling socket
  *
- * @param {Server} io The server object
  * @param {Socket} socket The socket
- * @param {string} id The user id to retrieve
+ * @param {CallbackFn} [callback] The callback sent to the client
  */
 export function getUserData(socket: Socket, callback: CallbackFn) {
   if (!socket) {
@@ -82,9 +82,9 @@ export function getUserData(socket: Socket, callback: CallbackFn) {
 /**
  * Set the points of the calling socket
  *
- * @param {Server} io The server object
  * @param {Socket} socket The socket
  * @param {number} points The points to set for the socket
+ * @param {CallbackFn} [callback] The callback sent to the client
  */
 export function setPoints(
   socket: Socket,
@@ -114,9 +114,9 @@ export function setPoints(
 /**
  * Add points to the calling socket
  *
- * @param {Server} io The server object
  * @param {Socket} socket The socket
  * @param {number} points The points to set for the socket
+ * @param {CallbackFn} [callback] The callback sent to the client
  */
 export function addPoints(
   socket: Socket,
@@ -146,8 +146,8 @@ export function addPoints(
 /**
  * Sends a message to the caller containing their points
  *
- * @param {Server} io The server object
  * @param {Socket} socket The socket
+ * @param {CallbackFn} [callback] The callback sent to the client
  */
 export function getPoints(socket: Socket, callback: CallbackFn) {
   if (!socket) {
@@ -172,7 +172,6 @@ export function getPoints(socket: Socket, callback: CallbackFn) {
 /**
  * Returns a promise containing the socket object with the specified id
  *
- * @export
  * @param {Server} io The server object
  * @param {string} id The id of the socket
  * @return {*}  {Promise<any>} Promise containing the socket

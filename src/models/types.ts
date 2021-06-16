@@ -43,6 +43,7 @@ export enum Message {
   card_doesnt_exist = "card_doesnt_exist",
   pile_doesnt_exist = "pile_doesnt_exist",
   invalid_pile_index = "invalid_pile_index",
+  invalid_time_limit = "invalid_time_limit",
 }
 
 export enum Piles {
