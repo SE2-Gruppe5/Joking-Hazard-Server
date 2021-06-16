@@ -153,8 +153,11 @@ export function addPoints(
     let roomCode = socket.data.currentRoom;
     let games = getGames();
     let game = games.get(roomCode);
-
+    console.log(game.pointLimit);
+    console.log(socket.data.point);
+    
     if (socket.data.point >= game.pointLimit) {
+      console.log("Winner")
       io.in(roomCode).emit("room:gameOver", {
         winner: socket.data
       });
