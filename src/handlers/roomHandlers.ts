@@ -45,8 +45,10 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
     playerEnteredGame(io, socket, callback ?? (() => {}))
   );
 
-  socket.on("room:storyConfirmed", (userId: string, cardId: string, callback?: CallbackFn) =>
-    storyConfirmed(io, socket, userId, cardId, callback ?? (() => {}))
+  socket.on(
+    "room:storyConfirmed",
+    (userId: string, cardId: string, callback?: CallbackFn) =>
+      storyConfirmed(io, socket, userId, cardId, callback ?? (() => {}))
   );
 }
 
@@ -57,7 +59,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
  *
  * @param {Server} io The server object
  * @param {Socket} socket The socket
- * @param timeLimit timeLimit per turn set by admin
+ * @param {number} timeLimit timeLimit per turn set by admin
  * @param {CallbackFn} callback The callback sent to the caller
  */
 export function createRoom(
@@ -66,7 +68,12 @@ export function createRoom(
   timeLimit: number,
   callback?: CallbackFn
 ) {
-  if (socket.data.currentRoom) {
+  if (timeLimit > 60 || timeLimit < 0) {
+    callback({
+      status: "err",
+      msg: Message.invalid_time_limit,
+    });
+  } else if (socket.data.currentRoom) {
     callback({
       status: "err",
       msg: Message.already_in_room,
@@ -108,7 +115,7 @@ export function createRoom(
  * @param {Server} io The server object
  * @param {Socket} socket The socket
  * @param {string} roomCode The room code
- * @param {CallbackFn} callback The callback sent to the caller
+ * @param {CallbackFn} [callback] The callback sent to the caller
  */
 export function joinRoom(
   io: Server,
@@ -151,7 +158,7 @@ export function joinRoom(
  *
  * @param {Server} io The server object
  * @param {Socket} socket The socket
- * @param {CallbackFn} callback The callback sent to the caller
+ * @param {CallbackFn} [callback] The callback sent to the caller
  */
 export function leaveRoom(io: Server, socket: Socket, callback?: CallbackFn) {
   if (!socket.data.currentRoom) {
@@ -212,7 +219,7 @@ export function leaveRoom(io: Server, socket: Socket, callback?: CallbackFn) {
  *
  * @param {Server} io The server object
  * @param {Socket} socket The socket
- * @param {CallbackFn} callback The callback sent to the caller
+ * @param {CallbackFn} [callback] The callback sent to the caller
  */
 export function closeRoom(io: Server, socket: Socket, callback?: CallbackFn) {
   if (!socket.data.admin) {
@@ -341,7 +348,6 @@ export function playerDone(io: Server, socket: Socket, callback?: CallbackFn) {
     getJudge(io, socket).then((socket) => {
       socket.emit("room:all_cards_played");
     });
-
   } else {
     game.currentPlayer =
       game.currentPlayer < game.players.length - 1 ? game.currentPlayer + 1 : 0;
@@ -351,23 +357,37 @@ export function playerDone(io: Server, socket: Socket, callback?: CallbackFn) {
   }
 }
 
-export function storyConfirmed(io: Server, socket: Socket, userId: string, cardId: string,callback?: CallbackFn){
+/**
+ * Called when the judge confirms their story
+ *
+ * @param {Server} io The server object
+ * @param {Socket} socket The socket
+ * @param {string} userId The user id
+ * @param {string} cardId The card id
+ * @param {CallbackFn} [callback] The callback sent to the caller
+ */
+export function storyConfirmed(
+  io: Server,
+  socket: Socket,
+  userId: string,
+  cardId: string,
+  callback?: CallbackFn
+) {
   let roomCode = socket.data.currentRoom;
   let game = games.get(roomCode);
 
   game.playersLeft = game.players.length - 1;
   game.currentRound += 1;
   game.currentJudge =
-      game.currentJudge < game.players.length - 1 ? game.currentJudge + 1 : 0;
+    game.currentJudge < game.players.length - 1 ? game.currentJudge + 1 : 0;
   game.currentPlayer = game.currentJudge;
   let currentPlayerId = game.players[game.currentPlayer];
   getSocketById(io, userId).then((socket) => {
-    io.in(roomCode).emit("room:winner", { player: socket.data.name, cardId});
+    io.in(roomCode).emit("room:winner", { player: socket.data.name, cardId });
     setTimeout(() => {
       io.to(currentPlayerId).emit("room:your_turn", { judge: true });
-    }, 4000)
+    }, 4000);
   });
-
 }
 /**
  * Returns a promise containing the current judge
@@ -375,7 +395,7 @@ export function storyConfirmed(io: Server, socket: Socket, userId: string, cardI
  * @param {Server} io The server object
  * @param {Socket} socket The socket
  */
-function getJudge(io: Server, socket: Socket): Promise<any> {
+export function getJudge(io: Server, socket: Socket): Promise<any> {
   let roomCode = socket.data.currentRoom;
   let game = games.get(roomCode);
   return getSocketById(io, game.players[game.currentJudge]);
@@ -406,7 +426,7 @@ export function playerEnteredGame(
       if (game.playersLeft === sockets.length) {
         game.playersLeft--;
         io.in(roomCode).emit("room:ready_to_play", {
-          timeLimit: game.timeLimit
+          timeLimit: game.timeLimit,
         });
         io.to(game.players[game.currentPlayer]).emit("room:your_turn", {
           judge: true,
