@@ -145,7 +145,7 @@ export function addPoints(
       msg: Message.user_doesnt_exist,
     });
   } else if (socket.data.currentRoom) {
-    socket.data.points = points;
+    socket.data.points += points;
 
     let roomCode = socket.data.currentRoom;
     let games = getGames();
