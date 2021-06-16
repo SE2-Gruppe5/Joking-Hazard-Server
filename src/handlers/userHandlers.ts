@@ -1,6 +1,7 @@
 import { RemoteSocket, Server, Socket } from "socket.io";
 import { DefaultEventsMap } from "socket.io/dist/typed-events";
 import { Message, CallbackFn } from "../models/types";
+import { getGames } from "./roomHandlers";
 
 /**
  * Registers user handlers
@@ -24,14 +25,14 @@ export function registerUserHandlers(io: Server, socket: Socket) {
     "user:points:set",
     (id: string, points: number, callback?: CallbackFn) =>
       getSocketById(io, id).then((socket) => {
-        setPoints(socket, points, callback ?? (() => {}));
+        setPoints(io, socket, points, callback ?? (() => {}));
       })
   );
   socket.on(
     "user:points:add",
     (id: string, points: number, callback?: CallbackFn) =>
       getSocketById(io, id).then((socket) => {
-        addPoints(socket, points, callback ?? (() => {}));
+        addPoints(io, socket, points, callback ?? (() => {}));
       })
   );
   socket.on("user:points:get", (id: string, callback?: CallbackFn) =>
@@ -87,6 +88,7 @@ export function getUserData(socket: Socket, callback: CallbackFn) {
  * @param {CallbackFn} [callback] The callback sent to the client
  */
 export function setPoints(
+  io: Server,
   socket: Socket,
   points: number,
   callback: CallbackFn
@@ -103,6 +105,16 @@ export function setPoints(
       msg: Message.user_set_points,
       points: socket.data.points,
     });
+
+    let roomCode = socket.data.currentRoom;
+    let games = getGames();
+    let game = games.get(roomCode);
+
+    if (socket.data.point >= game.pointLimit  ) {
+      io.in(roomCode).emit("room:gameOver", {
+        winner: socket.data
+      });
+    }
   } else {
     callback({
       status: "err",
@@ -119,6 +131,7 @@ export function setPoints(
  * @param {CallbackFn} [callback] The callback sent to the client
  */
 export function addPoints(
+  io: Server,
   socket: Socket,
   points: number,
   callback: CallbackFn
@@ -130,11 +143,22 @@ export function addPoints(
     });
   } else if (socket.data.currentRoom) {
     socket.data.points = points;
+    
     callback({
       status: "ok",
       msg: Message.user_set_points,
       points: socket.data.points,
     });
+
+    let roomCode = socket.data.currentRoom;
+    let games = getGames();
+    let game = games.get(roomCode);
+
+    if (socket.data.point >= game.pointLimit  ) {
+      io.in(roomCode).emit("room:gameOver", {
+        winner: socket.data
+      });
+    }
   } else {
     callback({
       status: "err",

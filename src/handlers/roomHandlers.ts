@@ -13,8 +13,8 @@ let games = new Map<string, GameObject>();
  * @param {Socket} socket The socket
  */
 export function registerRoomHandlers(io: Server, socket: Socket) {
-  socket.on("room:create", (timeLimit: number, callback?: CallbackFn) =>
-    createRoom(io, socket, timeLimit, callback ?? (() => {}))
+  socket.on("room:create", (timeLimit: number, pointLimit: number, callback?: CallbackFn) =>
+    createRoom(io, socket, timeLimit, pointLimit, callback ?? (() => {}))
   );
 
   socket.on("room:close", (callback?: CallbackFn) =>
@@ -66,6 +66,7 @@ export function createRoom(
   io: Server,
   socket: Socket,
   timeLimit: number,
+  pointLimit: number,
   callback?: CallbackFn
 ) {
   if (timeLimit > 60 || timeLimit < 0) {
@@ -86,6 +87,8 @@ export function createRoom(
         msg: Message.no_free_room,
       });
     } else {
+      console.log(pointLimit);
+      
       createCardsMap(room);
       games.set(room, {
         players: [],
@@ -94,6 +97,7 @@ export function createRoom(
         playersLeft: 0,
         currentRound: 1,
         timeLimit,
+        pointLimit
       });
       socket.join(room);
       socket.data.currentRoom = room;
@@ -445,4 +449,8 @@ export function playerEnteredGame(
 export function pad(num: number, size: number): string {
   var s = "0000" + num;
   return s.substr(s.length - size);
+}
+
+export function getGames() {
+  return games;
 }
