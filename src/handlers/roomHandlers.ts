@@ -74,6 +74,11 @@ export function createRoom(
       status: "err",
       msg: Message.invalid_time_limit,
     });
+  } else if (pointLimit < 1) {
+    callback({
+      status: "err",
+      msg: Message.invalid_point_limit,
+    });
   } else if (socket.data.currentRoom) {
     callback({
       status: "err",
