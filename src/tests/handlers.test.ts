@@ -492,47 +492,66 @@ describe("tests", () => {
   });
 
   test("room:playerCheated", (done) => {
-    clientSockets[0].emit("room:playerCheated", clientSockets[0].id, () => {
-      clientSockets[0].emit("room:getGameObject", (response) => {
-        let game = response.game;
-        expect(
-            game.lastPlayerCheated === clientSockets[0].id
-        )
-    });
+    clientSockets[0].emit("room:create", 0, (response) => {
+      clientSockets[1].emit("room:join", response.roomCode, () => {
+        clientSockets[0].emit("room:playerCheated", clientSockets[0].id, () => {
+          clientSockets[0].emit("room:getGameObject", (response) => {
+            let game = response.game;
+            expect(game.lastPlayerCheated === clientSockets[0].id);
+            done();
+          });
+        });
+      });
     });
   });
 
   test("room:playerCheated", (done) => {
-    clientSockets[0].emit("room:playerCheated", clientSockets[1].id, () => {
-      clientSockets[0].emit("room:playerCheated", clientSockets[0].id, () => {
-        clientSockets[0].emit("room:getGameObject", (response) => {
-          let game = response.game;
-          expect(
-              game.lastPlayerCheated === clientSockets[0].id
+    clientSockets[0].emit("room:create", 0, (response) => {
+      clientSockets[1].emit("room:join", response.roomCode, () => {
+        clientSockets[0].emit("room:playerCheated", clientSockets[1].id, () => {
+          clientSockets[0].emit(
+            "room:playerCheated",
+            clientSockets[0].id,
+            () => {
+              clientSockets[0].emit("room:getGameObject", (response) => {
+                let game = response.game;
+                expect(game.lastPlayerCheated === clientSockets[0].id);
+                done();
+              });
+            }
           );
         });
       });
     });
-
   });
 
   test("room:room:playerCaught", (done) => {
-    clientSockets[0].emit("room:playerCheated", clientSockets[1].id, () =>{
-      clientSockets[0].emit("room:room:playerCaught"), clientSockets[1].id, () =>{
-          expect(
-              clientSockets[1].data.points === -2
-          );
-      };
+    clientSockets[0].emit("room:create", 0, (response) => {
+      clientSockets[1].emit("room:join", response.roomCode, () => {
+        clientSockets[0].emit("room:playerCheated", clientSockets[1].id, () => {
+          clientSockets[0].emit("room:room:playerCaught"),
+            clientSockets[1].id,
+            () => {
+              expect(clientSockets[1].data.points === -2);
+              done();
+            };
+        });
+      });
     });
   });
 
   test("room:room:playerCaught", (done) => {
-    clientSockets[0].emit("room:playerCheated", clientSockets[1].id, () =>{
-      clientSockets[0].emit("room:room:playerCaught"), clientSockets[0].id, () =>{
-        expect(
-            clientSockets[0].data.points === -2
-        );
-      };
+    clientSockets[0].emit("room:create", 0, (response) => {
+      clientSockets[1].emit("room:join", response.roomCode, () => {
+        clientSockets[0].emit("room:playerCheated", clientSockets[1].id, () => {
+          clientSockets[0].emit("room:room:playerCaught"),
+            clientSockets[0].id,
+            () => {
+              expect(clientSockets[0].data.points === -2);
+              done();
+            };
+        });
+      });
     });
   });
 });

@@ -46,6 +46,7 @@ export enum Message {
   invalid_time_limit = "invalid_time_limit",
   invalid_point_limit = "invalid_point_limit",
   game_over = "game_over",
+  game_object_returned = "game_object_returned",
 }
 
 export enum Piles {
@@ -67,7 +68,7 @@ export interface CallbackObject {
   [args: string]: any;
 }
 
-export type CallbackFn = (obj: { game: GameObject }) => void;
+export type CallbackFn = (obj: CallbackObject) => void;
 
 export interface GameObject {
   players: string[];
@@ -77,5 +78,5 @@ export interface GameObject {
   currentRound: number;
   timeLimit: number;
   pointLimit: number;
-  lastPlayerCheated: string;
+  lastPlayerCheated: string | undefined;
 }
