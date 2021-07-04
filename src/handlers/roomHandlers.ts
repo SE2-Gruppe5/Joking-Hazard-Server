@@ -1,6 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { MessageType, Message, CallbackFn, GameObject } from "../models/types";
-import { getSocketById } from "./userHandlers";
+import {addPoints, getSocketById} from "./userHandlers";
 import { removeCardsMap, createCardsMap } from "./cardHandlers";
 
 let games = new Map<string, GameObject>();
@@ -49,6 +49,24 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
     "room:storyConfirmed",
     (userId: string, cardId: string, callback?: CallbackFn) =>
       storyConfirmed(io, socket, userId, cardId, callback ?? (() => {}))
+  );
+  
+  socket.on(
+	"room:playerCheated",
+	(userId: string, callback?: CallbackFn) =>
+		playerCheated(io, socket, userId, callback ?? (()=> {}))
+	);
+
+  socket.on(
+      "room:playerCaught",
+      (userId: string, callback?: CallbackFn) =>
+          playerCaught(io, socket, userId, callback ?? (()=> {}))
+  );
+
+  socket.on(
+      "room:getGameObject",
+      (callback?: CallbackFn) =>
+      getGameObject(socket, callback ?? (()=> {}))
   );
 }
 
@@ -442,6 +460,69 @@ export function playerEnteredGame(
         });
       }
     });
+}
+
+/**
+ * Called when a Player Cheated
+ *
+ * @param {Server} io The server object
+ * @param {Socket} socket The socket
+ * @param {string} userId The user id
+ * @param {CallbackFn} [callback] The callback sent to the caller
+ */
+export function playerCheated(
+  server: io,
+  socket: Socket,
+  userId: string,
+  callback?: CallbackFn
+  ): void {
+  let roomCode = socket.data.currentRoom;
+  let game = games.get(roomCode);
+  game.lastPlayerCheated = userId;
+  io.in(roomCode).emit("room:somePlayerCheated", {
+      user: userId,
+  });
+}
+
+export function getGameObject(
+    socket: Socket,
+    callback?: CallbackFn
+): void {
+  let roomCode = socket.data.roomCode;
+  let game = games.get(roomCode);
+  callback({game});
+}
+
+/**
+ * Called when a playerCaught
+ *
+ * @param {Server} io The server object
+ * @param {Socket} socket The socket
+ * @param {string} userId The user id
+ * @param {CallbackFn} [callback] The callback sent to the caller
+ */
+export function playerCaught(
+    server: io,
+    socket: Socket,
+    userId: string,
+    callback?: CallbackFn
+): void {
+  let roomCode = socket.data.currentRoom;
+  let game = games.get(roomCode);
+  if (game.lastPlayerCheated === userId){
+    addPoints(io, getSocketById(io, userId), -2, callback ?? (() => {
+    }));
+  io.in(roomCode).emit("room:somePlayerCaught", {
+    user: userId,
+  });
+  }
+   else {
+    addPoints(io, socket, -2, callback ?? (() => {
+    }));
+    io.in(roomCode).emit("room:playerGuessedWrong", {
+      user: socket.id,
+    });
+  }
 }
 
 /**
