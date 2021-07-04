@@ -1,6 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { MessageType, Message, CallbackFn, GameObject } from "../models/types";
-import { getSocketById } from "./userHandlers";
+import { addPoints, getSocketById } from "./userHandlers";
 import { removeCardsMap, createCardsMap } from "./cardHandlers";
 
 let games = new Map<string, GameObject>();
@@ -13,8 +13,10 @@ let games = new Map<string, GameObject>();
  * @param {Socket} socket The socket
  */
 export function registerRoomHandlers(io: Server, socket: Socket) {
-  socket.on("room:create", (timeLimit: number, pointLimit: number, callback?: CallbackFn) =>
-    createRoom(io, socket, timeLimit, pointLimit, callback ?? (() => {}))
+  socket.on(
+    "room:create",
+    (timeLimit: number, pointLimit: number, callback?: CallbackFn) =>
+      createRoom(io, socket, timeLimit, pointLimit, callback ?? (() => {}))
   );
 
   socket.on("room:close", (callback?: CallbackFn) =>
@@ -49,6 +51,18 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
     "room:storyConfirmed",
     (userId: string, cardId: string, callback?: CallbackFn) =>
       storyConfirmed(io, socket, userId, cardId, callback ?? (() => {}))
+  );
+
+  socket.on("room:playerCheated", (userId: string, callback?: CallbackFn) =>
+    playerCheated(io, socket, userId, callback ?? (() => {}))
+  );
+
+  socket.on("room:playerCaught", (userId: string, callback?: CallbackFn) =>
+    playerCaught(io, socket, userId, callback ?? (() => {}))
+  );
+
+  socket.on("room:getGameObject", (callback?: CallbackFn) =>
+    getGameObject(socket, callback ?? (() => {}))
   );
 }
 
@@ -92,17 +106,16 @@ export function createRoom(
         msg: Message.no_free_room,
       });
     } else {
-      console.log(pointLimit);
-      
       createCardsMap(room);
       games.set(room, {
         players: [],
+        lastPlayerCheated: undefined,
         currentPlayer: 0,
         currentJudge: 0,
         playersLeft: 0,
         currentRound: 1,
         timeLimit,
-        pointLimit
+        pointLimit,
       });
       socket.join(room);
       socket.data.currentRoom = room;
@@ -442,6 +455,104 @@ export function playerEnteredGame(
         });
       }
     });
+}
+
+/**
+ * Called when a Player cheated
+ *
+ * @param {Server} io The server object
+ * @param {Socket} socket The socket
+ * @param {string} userId The user id
+ * @param {CallbackFn} [callback] The callback sent to the caller
+ */
+export function playerCheated(
+  io: Server,
+  socket: Socket,
+  userId: string,
+  callback?: CallbackFn
+): void {
+  let roomCode = socket.data.currentRoom;
+  if (!roomCode) {
+    callback({
+      status: "err",
+      msg: Message.user_not_in_a_room,
+    });
+  } else {
+    let game = games.get(roomCode);
+    game.lastPlayerCheated = userId;
+    io.in(roomCode).emit("room:somePlayerCheated", {
+      user: userId,
+    });
+    callback({
+      status: "ok",
+      msg: Message.player_cheated,
+    });
+  }
+}
+
+export function getGameObject(socket: Socket, callback?: CallbackFn): void {
+  let roomCode = socket.data.roomCode;
+  if (!roomCode) {
+    callback({
+      status: "err",
+      msg: Message.user_not_in_a_room,
+    });
+  }
+  let game = games.get(roomCode);
+  callback({
+    status: "ok",
+    msg: Message.game_object_returned,
+    game,
+  });
+}
+
+/**
+ * Called when a playerCaught
+ *
+ * @param {Server} io The server object
+ * @param {Socket} socket The socket
+ * @param {string} userId The user id
+ * @param {CallbackFn} [callback] The callback sent to the caller
+ */
+export function playerCaught(
+  io: Server,
+  socket: Socket,
+  userId: string,
+  callback?: CallbackFn
+): void {
+  let roomCode = socket.data.currentRoom;
+  if (!roomCode) {
+    callback({
+      status: "err",
+      msg: Message.user_not_in_a_room,
+    });
+  } else {
+    let game = games.get(roomCode);
+    if (game.lastPlayerCheated === userId) {
+      getSocketById(io, userId).then((socket) => {
+        addPoints(io, socket, -2, callback ?? (() => {}));
+      });
+
+      io.in(roomCode).emit("room:somePlayerCaught", {
+        user: userId,
+      });
+
+      callback({
+        status: "ok",
+        msg: Message.player_got_caught,
+      });
+    } else {
+      addPoints(io, socket, -2, callback ?? (() => {}));
+      io.in(roomCode).emit("room:playerGuessedWrong", {
+        user: socket.id,
+      });
+
+      callback({
+        status: "ok",
+        msg: Message.player_guessed_wrong,
+      });
+    }
+  }
 }
 
 /**

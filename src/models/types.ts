@@ -46,6 +46,10 @@ export enum Message {
   invalid_time_limit = "invalid_time_limit",
   invalid_point_limit = "invalid_point_limit",
   game_over = "game_over",
+  game_object_returned = "game_object_returned",
+  player_cheated = "player_cheated",
+  player_got_caught = "player_got_caught",
+  player_guessed_wrong = "player_guessed_wrong",
 }
 
 export enum Piles {
@@ -77,4 +81,5 @@ export interface GameObject {
   currentRound: number;
   timeLimit: number;
   pointLimit: number;
+  lastPlayerCheated: string | undefined;
 }

@@ -1,7 +1,7 @@
 import { createServer } from "http";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { Message, MessageType, Piles } from "../models/types";
-import { registerRoomHandlers } from "../handlers/roomHandlers";
+import { registerRoomHandlers, joinRoom } from "../handlers/roomHandlers";
 import { registerUserHandlers } from "../handlers/userHandlers";
 import { registerCardHandlers } from "../handlers/cardHandlers";
 
@@ -37,13 +37,14 @@ describe("tests", () => {
   });
 
   beforeEach((done) => {
-    console.log("Resetting sockets...");
     for (let i = 0; i < clientSockets.length; i++) {
       clientSockets[i] = new Client(`http://localhost:${port}`);
     }
     clientSockets.forEach((socket, index) =>
       socket.on("connect", () => {
-        socket.on(MessageType.INFO, (response) => console.log(index, response));
+        socket.on(MessageType.INFO, (response) =>
+          console.log("msg to: " + index + " with content: ", response)
+        );
         socket.emit("user:name:change", index);
         done();
       })
@@ -61,7 +62,7 @@ describe("tests", () => {
   // room:create tests
 
   test("test room:create", (done) => {
-    clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (response) => {
       expect(response.status == "ok");
       done();
     });
@@ -69,7 +70,7 @@ describe("tests", () => {
 
   test("test room:create with no free rooms", (done) => {
     io.socketsJoin(roomIds);
-    clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (response) => {
       expect(
         response.status === "err" && response.msg === Message.no_free_room
       );
@@ -78,8 +79,8 @@ describe("tests", () => {
   });
 
   test("test room:create while already in a room", (done) => {
-    clientSockets[0].emit("room:create", 0, (_response) => {
-      clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (_response) => {
+      clientSockets[0].emit("room:create", 0, 5, (response) => {
         expect(
           response.status === "err" && response.msg === Message.already_in_room
         );
@@ -89,8 +90,8 @@ describe("tests", () => {
   });
 
   test("test room:create while already in a room", (done) => {
-    clientSockets[0].emit("room:create", 0, (_response) => {
-      clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (_response) => {
+      clientSockets[0].emit("room:create", 0, 5, (response) => {
         expect(
           response.status === "err" && response.msg === Message.already_in_room
         );
@@ -102,7 +103,7 @@ describe("tests", () => {
   // room:join tests
 
   test("test room:join", (done) => {
-    clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (response) => {
       clientSockets[1].emit("room:join", response.roomCode, (response) => {
         expect(response.status === "ok");
         done();
@@ -111,10 +112,10 @@ describe("tests", () => {
   });
 
   test("test room:join while already in a room", (done) => {
-    clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (response) => {
       clientSockets[1].emit("room:join", response.roomCode);
     });
-    clientSockets[2].emit("room:create", 0, (response) => {
+    clientSockets[2].emit("room:create", 0, 5, (response) => {
       clientSockets[1].emit("room:join", response.roomCode, (response) => {
         expect(
           response.status === "err" && response.msg === Message.already_in_room
@@ -125,7 +126,7 @@ describe("tests", () => {
   });
 
   test("test room:join with full room", (done) => {
-    clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (response) => {
       clientSockets[1].emit("room:join", response.roomCode, (response) => {
         expect(response.status === "ok");
       });
@@ -154,7 +155,7 @@ describe("tests", () => {
   // room:close tests
 
   test("test room:close", (done) => {
-    clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (response) => {
       expect(response.status === "ok");
       clientSockets[0].emit("room:close", (response) => {
         expect(response.status === "ok");
@@ -164,7 +165,7 @@ describe("tests", () => {
   });
 
   test("test room:close as non-admin", (done) => {
-    clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (response) => {
       expect(response.status === "ok");
       clientSockets[1].emit("room:join", response.roomCode, (response) => {
         expect(response.status === "ok");
@@ -191,7 +192,7 @@ describe("tests", () => {
   // room:leave tests
 
   test("test room:leave", (done) => {
-    clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (response) => {
       expect(response.status === "ok");
       clientSockets[0].emit("room:leave", (response) => {
         expect(response.status === "ok");
@@ -201,7 +202,7 @@ describe("tests", () => {
   });
 
   test("test room:leave as non-admin", (done) => {
-    clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (response) => {
       expect(response.status === "ok");
       clientSockets[1].emit("room:join", response.roomCode, (response) => {
         expect(response.status === "ok");
@@ -220,9 +221,9 @@ describe("tests", () => {
       }
     });
 
-    clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (response) => {
       clientSockets[1].emit("room:join", response.roomCode, (_response) => {
-        clientSockets[0].emit("room:leave");
+        clientSockets[0].emit("room:leave", () => {});
       });
     });
   });
@@ -239,7 +240,7 @@ describe("tests", () => {
   // Test room:players
 
   test("test room:players", (done) => {
-    clientSockets[0].emit("room:create", 0, (response) => {
+    clientSockets[0].emit("room:create", 0, 5, (response) => {
       clientSockets[1].emit("room:join", response.roomCode);
       clientSockets[2].emit("room:join", response.roomCode);
       clientSockets[0].emit("room:players", (response) => {
@@ -267,7 +268,7 @@ describe("tests", () => {
   });
 
   test("test user:points:get", (done) => {
-    clientSockets[0].emit("room:create", 0, (_response) => {
+    clientSockets[0].emit("room:create", 0, 5, (_response) => {
       clientSockets[0].emit(
         "user:points:get",
         clientSockets[0].id,
@@ -294,7 +295,7 @@ describe("tests", () => {
   });
 
   test("test user:points:get when user doesn't exist", (done) => {
-    clientSockets[0].emit("room:create", 0, (_response) => {
+    clientSockets[0].emit("room:create", 0, 5, (_response) => {
       clientSockets[0].emit("user:points:get", "0", (response) => {
         expect(
           response.status === "err" &&
@@ -306,7 +307,7 @@ describe("tests", () => {
   });
 
   test("test user:points:add", (done) => {
-    clientSockets[0].emit("room:create", 0, (_response) => {
+    clientSockets[0].emit("room:create", 0, 5, (_response) => {
       clientSockets[0].emit(
         "user:points:add",
         clientSockets[0].id,
@@ -347,7 +348,7 @@ describe("tests", () => {
   });
 
   test("test user:points:add when user doesn't exist", (done) => {
-    clientSockets[0].emit("room:create", 0, (_response) => {
+    clientSockets[0].emit("room:create", 0, 5, (_response) => {
       clientSockets[0].emit(
         "user:points:add",
         clientSockets[0].id,
@@ -366,7 +367,7 @@ describe("tests", () => {
   });
 
   test("test user:points:set", (done) => {
-    clientSockets[0].emit("room:create", 0, (_response) => {
+    clientSockets[0].emit("room:create", 0, 5, (_response) => {
       clientSockets[0].emit(
         "user:points:set",
         clientSockets[0].id,
@@ -407,7 +408,7 @@ describe("tests", () => {
   });
 
   test("test user:points:set when user doesn't exist", (done) => {
-    clientSockets[0].emit("room:create", 0, (_response) => {
+    clientSockets[0].emit("room:create", 0, 5, (_response) => {
       clientSockets[0].emit(
         "user:points:set",
         clientSockets[0].id,
@@ -426,7 +427,7 @@ describe("tests", () => {
   });
 
   test("test card:move", (done) => {
-    clientSockets[0].emit("room:create", 0, (_response) => {
+    clientSockets[0].emit("room:create", 0, 5, (_response) => {
       clientSockets[0].emit(
         "card:move",
         Piles.deck,
@@ -444,7 +445,7 @@ describe("tests", () => {
   });
 
   test("test card:move with invalid index", (done) => {
-    clientSockets[0].emit("room:create", 0, (_response) => {
+    clientSockets[0].emit("room:create", 0, 5, (_response) => {
       clientSockets[0].emit(
         "card:move",
         Piles.deck,
@@ -463,7 +464,7 @@ describe("tests", () => {
   });
 
   test("test card:move with invalid pile", (done) => {
-    clientSockets[0].emit("room:create", 0, (_response) => {
+    clientSockets[0].emit("room:create", 0, 5, (_response) => {
       clientSockets[0].emit("card:move", Piles.deck, -1, 0, 0, (response) => {
         expect(
           response.status === "err" &&
@@ -489,5 +490,95 @@ describe("tests", () => {
         done();
       }
     );
+  });
+
+  test("room:playerCheated", (done) => {
+    clientSockets[0].emit("room:create", 10, 10, (response) => {
+      clientSockets[1].emit("room:join", response.roomCode, () => {
+        clientSockets[1].emit("room:playerCheated", clientSockets[0].id, () => {
+          clientSockets[1].emit("room:getGameObject", (response1) => {
+            let game = response1.game;
+            expect(
+              response1.status === "ok" &&
+                game.lastPlayerCheated === clientSockets[0].id
+            );
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  test("room:playerCheated", (done) => {
+    clientSockets[0].emit("room:create", 10, 10, (response) => {
+      clientSockets[1].emit("room:join", response.roomCode, () => {
+        clientSockets[0].emit("room:playerCheated", clientSockets[1].id, () => {
+          clientSockets[0].emit(
+            "room:playerCheated",
+            clientSockets[0].id,
+            () => {
+              clientSockets[0].emit("room:getGameObject", (response1) => {
+                let game = response1.game;
+                expect(
+                  response1.status === "ok" &&
+                    game.lastPlayerCheated === clientSockets[0].id
+                );
+                done();
+              });
+            }
+          );
+        });
+      });
+    });
+  });
+
+  test("room:playerCaught", (done) => {
+    clientSockets[0].emit("room:create", 10, 10, (response) => {
+      clientSockets[1].emit("room:join", response.roomCode, () => {
+        clientSockets[1].emit("room:playerCheated", clientSockets[1].id, () => {
+          clientSockets[0].emit(
+            "room:playerCaught",
+            clientSockets[1].id,
+            (response1) => {
+              clientSockets[0].emit(
+                "user:points:get",
+                clientSockets[0].id,
+                (response3) => {
+                  expect(response1.status === "ok" && response3.points == -2);
+                  done();
+                }
+              );
+            }
+          );
+        });
+      });
+    });
+  });
+
+  test("room:playerCaught", (done) => {
+    clientSockets[0].emit("room:create", 10, 10, (response) => {
+      clientSockets[1].emit("room:join", response.roomCode, () => {
+        clientSockets[1].emit(
+          "room:playerCheated",
+          clientSockets[1].id,
+          (response1) => {
+            clientSockets[0].emit(
+              "room:playerCaught",
+              clientSockets[0].id,
+              (response2) => {
+                clientSockets[0].emit(
+                  "user:points:get",
+                  clientSockets[0].id,
+                  (response3) => {
+                    expect(response1.status === "ok" && response3.points == -2);
+                    done();
+                  }
+                );
+              }
+            );
+          }
+        );
+      });
+    });
   });
 });
