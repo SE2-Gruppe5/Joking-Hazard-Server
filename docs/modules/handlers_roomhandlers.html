@@ -76,11 +76,15 @@
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#createroom" class="tsd-kind-icon">create<wbr>Room</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#findemptyroom" class="tsd-kind-icon">find<wbr>Empty<wbr>Room</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#getcurrentplayer" class="tsd-kind-icon">get<wbr>Current<wbr>Player</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#getgameobject" class="tsd-kind-icon">get<wbr>Game<wbr>Object</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#getgames" class="tsd-kind-icon">get<wbr>Games</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#getjudge" class="tsd-kind-icon">get<wbr>Judge</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#getplayers" class="tsd-kind-icon">get<wbr>Players</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#joinroom" class="tsd-kind-icon">join<wbr>Room</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#leaveroom" class="tsd-kind-icon">leave<wbr>Room</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#pad" class="tsd-kind-icon">pad</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#playercaught" class="tsd-kind-icon">player<wbr>Caught</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#playercheated" class="tsd-kind-icon">player<wbr>Cheated</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#playerdone" class="tsd-kind-icon">player<wbr>Done</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#playerenteredgame" class="tsd-kind-icon">player<wbr>Entered<wbr>Game</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="handlers_roomhandlers.html#registerroomhandlers" class="tsd-kind-icon">register<wbr>Room<wbr>Handlers</a></li>
@@ -102,7 +106,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L224">handlers/roomHandlers.ts:224</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L246">handlers/roomHandlers.ts:246</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -137,13 +141,13 @@
 					<a name="createroom" class="tsd-anchor"></a>
 					<h3>create<wbr>Room</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
-						<li class="tsd-signature tsd-kind-icon">create<wbr>Room<span class="tsd-signature-symbol">(</span>io<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Server</span>, socket<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Socket</span>, timeLimit<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, callback<span class="tsd-signature-symbol">?: </span><a href="models_types.html#callbackfn" class="tsd-signature-type" data-tsd-kind="Type alias">CallbackFn</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Room<span class="tsd-signature-symbol">(</span>io<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Server</span>, socket<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Socket</span>, timeLimit<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, pointLimit<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, callback<span class="tsd-signature-symbol">?: </span><a href="models_types.html#callbackfn" class="tsd-signature-type" data-tsd-kind="Type alias">CallbackFn</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L65">handlers/roomHandlers.ts:65</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L79">handlers/roomHandlers.ts:79</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -174,6 +178,9 @@
 									</div>
 								</li>
 								<li>
+									<h5>pointLimit: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> callback: <a href="models_types.html#callbackfn" class="tsd-signature-type" data-tsd-kind="Type alias">CallbackFn</a></h5>
 									<div class="tsd-comment tsd-typography">
 										<p>The callback sent to the caller</p>
@@ -194,7 +201,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L299">handlers/roomHandlers.ts:299</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L321">handlers/roomHandlers.ts:321</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -226,7 +233,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L315">handlers/roomHandlers.ts:315</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L337">handlers/roomHandlers.ts:337</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -257,6 +264,49 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="getgameobject" class="tsd-anchor"></a>
+					<h3>get<wbr>Game<wbr>Object</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Game<wbr>Object<span class="tsd-signature-symbol">(</span>socket<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Socket</span>, callback<span class="tsd-signature-symbol">?: </span><a href="models_types.html#callbackfn" class="tsd-signature-type" data-tsd-kind="Type alias">CallbackFn</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L493">handlers/roomHandlers.ts:493</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>socket: <span class="tsd-signature-type">Socket</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> callback: <a href="models_types.html#callbackfn" class="tsd-signature-type" data-tsd-kind="Type alias">CallbackFn</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="getgames" class="tsd-anchor"></a>
+					<h3>get<wbr>Games</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Games<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><a href="../interfaces/models_types.gameobject.html" class="tsd-signature-type" data-tsd-kind="Interface">GameObject</a><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L572">handlers/roomHandlers.ts:572</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><a href="../interfaces/models_types.gameobject.html" class="tsd-signature-type" data-tsd-kind="Interface">GameObject</a><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
 					<a name="getjudge" class="tsd-anchor"></a>
 					<h3>get<wbr>Judge</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
@@ -266,7 +316,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L398">handlers/roomHandlers.ts:398</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L420">handlers/roomHandlers.ts:420</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -303,7 +353,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L265">handlers/roomHandlers.ts:265</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L287">handlers/roomHandlers.ts:287</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -343,7 +393,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L120">handlers/roomHandlers.ts:120</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L142">handlers/roomHandlers.ts:142</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -391,7 +441,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L163">handlers/roomHandlers.ts:163</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L185">handlers/roomHandlers.ts:185</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -433,7 +483,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L445">handlers/roomHandlers.ts:445</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L567">handlers/roomHandlers.ts:567</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -462,6 +512,98 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="playercaught" class="tsd-anchor"></a>
+					<h3>player<wbr>Caught</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">player<wbr>Caught<span class="tsd-signature-symbol">(</span>io<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Server</span>, socket<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Socket</span>, userId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, callback<span class="tsd-signature-symbol">?: </span><a href="models_types.html#callbackfn" class="tsd-signature-type" data-tsd-kind="Type alias">CallbackFn</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L517">handlers/roomHandlers.ts:517</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Called when a playerCaught</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>io: <span class="tsd-signature-type">Server</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The server object</p>
+									</div>
+								</li>
+								<li>
+									<h5>socket: <span class="tsd-signature-type">Socket</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The socket</p>
+									</div>
+								</li>
+								<li>
+									<h5>userId: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The user id</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> callback: <a href="models_types.html#callbackfn" class="tsd-signature-type" data-tsd-kind="Type alias">CallbackFn</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="playercheated" class="tsd-anchor"></a>
+					<h3>player<wbr>Cheated</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">player<wbr>Cheated<span class="tsd-signature-symbol">(</span>io<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Server</span>, socket<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Socket</span>, userId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, callback<span class="tsd-signature-symbol">?: </span><a href="models_types.html#callbackfn" class="tsd-signature-type" data-tsd-kind="Type alias">CallbackFn</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L468">handlers/roomHandlers.ts:468</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Called when a Player cheated</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>io: <span class="tsd-signature-type">Server</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The server object</p>
+									</div>
+								</li>
+								<li>
+									<h5>socket: <span class="tsd-signature-type">Socket</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The socket</p>
+									</div>
+								</li>
+								<li>
+									<h5>userId: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The user id</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> callback: <a href="models_types.html#callbackfn" class="tsd-signature-type" data-tsd-kind="Type alias">CallbackFn</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
 					<a name="playerdone" class="tsd-anchor"></a>
 					<h3>player<wbr>Done</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
@@ -471,7 +613,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L344">handlers/roomHandlers.ts:344</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L366">handlers/roomHandlers.ts:366</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -511,7 +653,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L411">handlers/roomHandlers.ts:411</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L433">handlers/roomHandlers.ts:433</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -551,7 +693,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L15">handlers/roomHandlers.ts:15</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L15">handlers/roomHandlers.ts:15</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -592,7 +734,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/177f9c9/src/handlers/roomHandlers.ts#L369">handlers/roomHandlers.ts:369</a></li>
+									<li>Defined in <a href="https://github.com/SE2-Gruppe5/Joking-Hazard-Server/blob/0a4a175/src/handlers/roomHandlers.ts#L391">handlers/roomHandlers.ts:391</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -640,7 +782,7 @@
 			<nav class="tsd-navigation primary">
 				<ul>
 					<li class=" ">
-						<a href="../modules.html">Exports</a>
+						<a href="../modules.html">Modules</a>
 					</li>
 					<li class=" tsd-kind-module">
 						<a href="handlers_cardhandlers.html">handlers/card<wbr>Handlers</a>
@@ -652,13 +794,7 @@
 						<a href="handlers_userhandlers.html">handlers/user<wbr>Handlers</a>
 					</li>
 					<li class=" tsd-kind-module">
-						<a href="index.html">index</a>
-					</li>
-					<li class=" tsd-kind-module">
 						<a href="models_types.html">models/types</a>
-					</li>
-					<li class=" tsd-kind-module">
-						<a href="tests_handlers_test.html">tests/handlers.test</a>
 					</li>
 					<li class=" tsd-kind-module">
 						<a href="utils_logger.html">utils/<wbr>Logger</a>
@@ -680,6 +816,12 @@
 						<a href="handlers_roomhandlers.html#getcurrentplayer" class="tsd-kind-icon">get<wbr>Current<wbr>Player</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="handlers_roomhandlers.html#getgameobject" class="tsd-kind-icon">get<wbr>Game<wbr>Object</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="handlers_roomhandlers.html#getgames" class="tsd-kind-icon">get<wbr>Games</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
 						<a href="handlers_roomhandlers.html#getjudge" class="tsd-kind-icon">get<wbr>Judge</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module">
@@ -693,6 +835,12 @@
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module">
 						<a href="handlers_roomhandlers.html#pad" class="tsd-kind-icon">pad</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="handlers_roomhandlers.html#playercaught" class="tsd-kind-icon">player<wbr>Caught</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="handlers_roomhandlers.html#playercheated" class="tsd-kind-icon">player<wbr>Cheated</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module">
 						<a href="handlers_roomhandlers.html#playerdone" class="tsd-kind-icon">player<wbr>Done</a>
