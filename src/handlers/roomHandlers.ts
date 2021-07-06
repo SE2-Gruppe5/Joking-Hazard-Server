@@ -533,6 +533,8 @@ export function playerCaught(
         addPoints(io, socket, -2, callback ?? (() => {}));
       });
 
+      game.lastPlayerCheated = null;
+
       io.in(roomCode).emit("room:somePlayerCaught", {
         user: userId,
       });
